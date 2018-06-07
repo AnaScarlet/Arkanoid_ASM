@@ -1,0 +1,220 @@
+.global main
+.balign 4
+
+img_wid = 60
+img_hi = 40
+
+main:
+	push {r4, r5, r6, lr}
+	ldr r0, =frameBufferInfo 	// frame buffer information structure
+	bl initFbInfo			// from the C file
+
+	mov r1, #0
+	mov r2, #35
+	bl draw_black
+
+	mov r4, #612
+	mov r5, #127
+
+floor_loop:
+	bl get_floor_tile
+	mov r1, r4
+	mov r2, r5
+	mov r3, #img_wid
+	bl draw_img
+	add r4, #img_wid
+	cmp r4, #1152
+	ble floor_loop
+
+	mov r4, #612
+	add r5, #img_hi
+	cmp r5, #888
+	ble floor_loop
+
+	mov r4, #572
+	mov r5, #87
+
+top_wall_loop:
+	bl get_d_brick_t
+	mov r1, r4
+	mov r2, r5
+	mov r3, #img_hi
+	bl draw_img
+	add r4, #img_hi
+	ldr r0, =#1212
+	cmp r4, r0
+	ble top_wall_loop
+
+	mov r4, #572
+	mov r5, #127
+
+side_wall_loop:
+	bl get_d_brick_l
+	mov r1, r4
+	mov r2, r5
+	mov r3, #img_hi
+	bl draw_img
+	add r5, #img_hi
+	cmp r5, #888
+	ble side_wall_loop
+
+	ldr r0, =#1212
+	cmp r4, r0
+	beq next
+	movne r4, r0
+	movne r5, #127
+	bne side_wall_loop
+
+next:	mov r4, #612
+	mov r5, #247
+	bl get_gray_brick
+	mov r6, r0
+
+bricks_loop:
+	mov r0, r6
+	mov r1, r4
+	mov r2, r5
+	mov r3, #img_wid
+	bl draw_img
+	add r4, #img_wid
+	cmp r4, #1152
+	ble bricks_loop	
+
+	add r5, #40
+	mov r4, #612
+	ldr r1, =#287
+	cmp r5, r1
+	bleq get_red_brick
+	ldr r1, =#327
+	cmp r5, r1
+	bleq get_purple_brick
+	ldr r1, =#367
+	cmp r5, r1
+	bleq get_blue_brick
+	ldr r1, =#407
+	cmp r5, r1
+	bleq get_yellow_brick
+	ldr r1, =#447
+	cmp r5, r1
+	bleq get_green_brick
+
+	mov r6, r0
+	ldr r1, =#447
+	cmp r5, r1
+	ble bricks_loop
+
+	pop {r4, r5, r6, lr}
+	bx lr
+
+
+width .req r4
+height .req r5
+fb_ptr .req r6
+fb_offset .req r7
+i_r .req r8
+addr .req r11
+j_r .req r12
+
+s_wid: .string "%d\n"
+s_hi: .string "%d\n"
+
+// Agrs:
+//	r0 = address of image
+//	r1 = width (x)
+//	r2 = height (y)
+
+draw_black: 
+	push {width, height, fb_ptr, fb_offset, i_r, j_r, lr}
+
+	ldr r0, =frameBufferInfo
+	ldr fb_ptr, [r0]
+	ldr width, [r0, #4]
+	ldr height, [r0, #8]
+
+// element fb_offset = (y * width) + x
+	mul fb_offset, r2, width
+	add fb_offset, r1
+
+// physical fb_offset *= 4 (each pixel is 4 bytes in size)
+	lsl fb_offset, #2
+
+	mov j_r, #0
+	mov i_r, #0
+
+loop:
+	mov r0, #0xFF000000
+	str r0, [fb_ptr, fb_offset]
+	add i_r, #1	
+	add fb_offset, #4		// increment fb horizontally (by 4 bytes ie 1 px) 
+	cmp i_r, #1824		// if i_r < 16*4 (image length in bytes),
+	blt loop
+
+	mov i_r, #0
+	add j_r, #1			// increment vertically
+	cmp j_r, #948
+	ble loop
+
+	pop {width, height, fb_ptr, fb_offset, i_r, j_r, lr}
+	bx lr
+
+// Agrs:
+//	r0 = address of image
+//	r1 = width (x)
+//	r2 = height (y)
+//	r3 = image width (120, 60 or 40)
+
+draw_img: 
+	push {width, height, fb_ptr, fb_offset, i_r, addr, j_r, lr}
+
+	mov addr, r0
+
+	ldr r0, =frameBufferInfo
+	ldr fb_ptr, [r0]
+	ldr width, [r0, #4]
+	ldr height, [r0, #8]
+
+// element fb_offset = (y * width) + x
+	mul fb_offset, r2, width
+	add fb_offset, r1
+
+// physical fb_offset *= 4 (each pixel is 4 bytes in size)
+	lsl fb_offset, #2
+
+// calculate the width to shift the offet by to go to the next line
+	sub width, r3
+	lsl width, #2
+
+	mov j_r, #0
+	mov i_r, #0
+
+loop1:
+	ldr r0, [addr]
+	str r0, [fb_ptr, fb_offset]
+	add i_r, #1	
+	add fb_offset, #4		// increment fb horizontally (by 4 bytes ie 1 px) 
+	add addr, #4			// increment address to load from to the next image pixel in img
+	cmp i_r, r3			// if i_r < image width,
+	blt loop1			// loop inner loop
+				// otherwise, go into outer loop
+	add fb_offset, width
+	mov i_r, #0
+	add j_r, #1			// increment vertically
+	cmp j_r, #img_hi
+	blt loop1
+
+	pop {width, height, fb_ptr, fb_offset, i_r, addr, j_r, lr}
+	bx lr
+
+
+@ Data section
+.section .data
+
+.align 2
+//.globl frameBufferInfo
+
+frameBufferInfo:
+	.word	0		@ frame buffer pointer
+	.word	0		@ screen width
+	.word	0		@ screen height
+
+
