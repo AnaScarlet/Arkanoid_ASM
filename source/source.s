@@ -1,11 +1,12 @@
 .global main
+.global draw_img
 .balign 4
 
 img_wid = 60
 img_hi = 40
 
 main:
-	push {r4, r5, r6, fp, lr}
+	push {fp, lr}
 	sub sp, #20
 	mov fp, sp
 
@@ -26,6 +27,34 @@ main:
 	mov r3, fp
 	bl draw_black
 
+	mov r0, fp
+	bl draw_grid
+
+// draw initial numbers
+	mov r0, fp
+	mov r1, #0
+	ldr r2, =#702
+	mov r3, #48
+	bl draw_number
+
+	mov r0, fp
+	mov r1, #3
+	ldr r2, =#1172
+	mov r3, #48
+	bl draw_number
+
+	mov r0, fp
+	bl controller
+
+	add sp, #20
+	pop {fp, lr}
+	bx lr
+
+
+draw_grid:
+	push {r4, r5, r6, fp, lr}
+	mov fp, r0			// same as main's fp
+
 	mov r4, #612
 	mov r5, #127
 	mov r0, #img_wid
@@ -37,8 +66,7 @@ floor_loop:
 	bl get_floor_tile
 	mov r1, r4
 	mov r2, r5
-	mov r3, fp		// pass the address of stack variables
-//ov r3, #img_wid
+	mov r3, fp			// pass the address of stack variables
 	bl draw_img
 	add r4, #img_wid
 	cmp r4, #1152
@@ -61,7 +89,6 @@ top_wall_loop:
 	mov r1, r4
 	mov r2, r5
 	mov r3, fp
-//	mov r3, #img_hi
 	bl draw_img
 	add r4, #img_hi
 	ldr r0, =#1212
@@ -77,7 +104,6 @@ side_wall_loop:
 	mov r1, r4
 	mov r2, r5
 	mov r3, fp
-//	mov r3, #img_hi
 	bl draw_img
 	add r5, #img_hi
 	cmp r5, #888
@@ -104,7 +130,6 @@ bricks_loop:
 	mov r1, r4
 	mov r2, r5
 	mov r3, fp
-//	mov r3, #img_wid
 	bl draw_img
 	add r4, #img_wid
 	cmp r4, #1152
@@ -133,7 +158,6 @@ bricks_loop:
 	cmp r5, r1
 	ble bricks_loop
 
-
 	mov r0, #680
 	str r0, [fp, #12]
 	mov r0, #img_hi
@@ -143,32 +167,125 @@ bricks_loop:
 	mov r1, #572
 	mov r2, #35
 	mov r3, fp
-//	mov r3, #680
 	bl draw_img
 
-	mov r0, #14
-	str r0, [fp, #12]
-	mov r0, #20
-	str r0, [fp, #16]
-
-	bl get_0
-	mov r1, #702
-	mov r2, #48
-	mov r3, fp
-//	mov r3, #14
-	bl draw_img
-	
-	bl get_3
-	mov r1, #1172
-	mov r2, #48
-	// image dimentions stay the same
-	mov r3, fp
-//	mov r3, #14
-	bl draw_img
-
-	add sp, #20
-	pop {r4, r5, r6, lr}
+	pop {r4, r5, r6, fp, lr}
 	bx lr
+
+
+controller:
+	push 	{lr}
+	mov fp, r0				// same fp as main
+
+	bl	init_snes
+	
+	mov 	r0, #120
+	str 	r0, [fp, #12]
+	mov 	r0, #img_hi
+	str 	r0, [fp, #16]
+
+	bl	get_paddle			// returns address of image in r0
+	ldr 	r2, =paddle_location
+	ldr 	r1, [r2]			// paddle location x
+	ldr 	r2, [r2, #4]			// paddle location y
+	mov 	r3, fp
+	bl 	draw_img
+
+draw_loop:					// infinite loop
+//	mov	r0, #5000
+//	bl	delayMicroseconds
+	
+//	bl	Read_SNES
+	mov 	r0, #4			// simulate move left
+
+	cmp	r0, #1
+	ble	draw_loop
+	cmp	r0, #2
+	beq	A_Move
+	cmp	r0, #3
+	beq	Right_Move
+	cmp	r0, #4
+	beq	Left_Move
+	cmp	r0, #5
+	beq	end
+	cmp	r0, #6
+	beq	Select_Move
+	cmp	r0, #7
+	beq	B_Move
+	b	draw
+
+A_Move:
+	ldr	r0, =paddle_location
+	ldr	r1, [r0, #4]
+	ldr	r2, =frameBufferInfo
+	ldr	r2, [r2, #4]
+	add	r1, r2
+	str	r1, [r0, #4]		// change paddle location's y
+	b	draw
+Right_Move:
+	ldr	r0, =paddle_location
+	ldr	r1, [r0]
+	add	r1, #1
+	str	r1, [r0]		// change paddle location's x
+	b	draw
+Left_Move:
+	ldr	r0, =paddle_location
+	ldr	r1, [r0]
+	sub	r1, #1
+	str	r1, [r0]		// change paddle location's x
+	b	draw
+Select_Move:
+	ldr	r0, =paddle_location
+	ldr	r1, [r0]
+	ldr	r2, [r0, #4]
+	mov	r1, #850
+	mov	r2, #864
+	str	r1, [r0]
+	str	r2, [r0, #4]		// change paddle location's y
+	b	draw
+B_Move:	
+	ldr	r0, =paddle_location
+	ldr	r1, [r0, #4]
+	ldr	r2, =frameBufferInfo
+	ldr	r2, [r2, #4]
+	sub	r1, r2
+	str	r1, [r0, #4]		// change paddle location's y
+
+draw:	
+	mov r0, fp
+	bl draw_grid
+
+draw_paddle:
+	mov 	r0, #120
+	str 	r0, [fp, #12]
+	mov 	r0, #img_hi
+	str 	r0, [fp, #16]
+
+	ldr 	r0, =paddle_location
+	ldr 	r1, [r0]		// get x
+	ldr 	r2, [r0, #4]		// get y
+	bl	get_paddle		// get image address
+	mov 	r3, fp
+	bl 	draw_img
+
+// draw numbers
+	mov r0, fp
+	mov r1, #1
+	ldr r2, =#702
+	mov r3, #48
+	bl draw_number
+
+	mov r0, fp
+	mov r1, #3
+	ldr r2, =#1172
+	mov r3, #48
+	bl draw_number
+
+	b	draw_loop
+	
+end:	
+	pop 	{lr}
+	bx 	lr
 
 
 width .req r4
@@ -283,4 +400,9 @@ frameBufferInfo:
 	.word	0		@ screen width
 	.word	0		@ screen height
 
+paddle_location:
+	.word	850		// x
+	.word 	850		// y
+
+.end
 
