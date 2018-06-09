@@ -4,6 +4,14 @@
 
 img_wid = 60
 img_hi = 40
+tiles_minX = 612
+tile0_minY = 247 
+tile1_minY = 287
+tile2_minY = 327
+tile3_minY = 367
+tile4_minY = 407
+tile5_minY = 447
+
 
 main:
 	push {fp, lr}
@@ -116,8 +124,8 @@ side_wall_loop:
 	movne r5, #127
 	bne side_wall_loop
 
-next:	mov r4, #612
-	mov r5, #247
+next:	mov r4, #tiles_minX
+	mov r5, #tile0_minY
 	mov r0, #img_wid
 	str r0, [fp, #12]
 	mov r0, #img_hi
@@ -136,25 +144,25 @@ bricks_loop:
 	ble bricks_loop	
 
 	add r5, #40
-	mov r4, #612
-	ldr r1, =#287
+	mov r4, #tiles_minX
+	ldr r1, =#tile1_minY
 	cmp r5, r1
 	bleq get_red_brick
-	ldr r1, =#327
+	ldr r1, =#tile2_minY
 	cmp r5, r1
 	bleq get_purple_brick
-	ldr r1, =#367
+	ldr r1, =#tile3_minY
 	cmp r5, r1
 	bleq get_blue_brick
-	ldr r1, =#407
+	ldr r1, =#tile4_minY
 	cmp r5, r1
 	bleq get_yellow_brick
-	ldr r1, =#447
+	ldr r1, =#tile5_minY
 	cmp r5, r1
 	bleq get_green_brick
 
 	mov r6, r0
-	ldr r1, =#447
+	ldr r1, =#tile5_minY
 	cmp r5, r1
 	ble bricks_loop
 
@@ -172,9 +180,11 @@ bricks_loop:
 	pop {r4, r5, r6, fp, lr}
 	bx lr
 
+delay .req r4
+released .req r5
 
 controller:
-	push 	{lr}
+	push 	{r4, r5, lr}
 	mov fp, r0				// same fp as main
 
 	bl	init_snes
@@ -184,6 +194,8 @@ controller:
 	mov 	r0, #img_hi
 	str 	r0, [fp, #16]
 
+	mov r4, #8000				// initialize delay
+
 	bl	get_paddle			// returns address of image in r0
 	ldr 	r2, =paddle_location
 	ldr 	r1, [r2]			// paddle location x
@@ -192,11 +204,11 @@ controller:
 	bl 	draw_img
 
 draw_loop:					// infinite loop
-//	mov	r0, #5000
-//	bl	delayMicroseconds
+	mov	r0, r4
+	bl	delayMicroseconds
 	
-//	bl	Read_SNES
-	mov 	r0, #4			// simulate move left
+	bl	Read_SNES
+//	mov 	r0, #4			// simulate move left
 
 	cmp	r0, #1
 	ble	draw_loop
@@ -215,25 +227,35 @@ draw_loop:					// infinite loop
 	b	draw
 
 A_Move:
+/*
 	ldr	r0, =paddle_location
 	ldr	r1, [r0, #4]
 	ldr	r2, =frameBufferInfo
 	ldr	r2, [r2, #4]
 	add	r1, r2
-	str	r1, [r0, #4]		// change paddle location's y
-	b	draw
+	str	r1, [r0, #4]		// change paddle location's y?
+*/
+	cmp r4, #1000			// minimum delay
+	subgt 	r4, #500
+	mov	r0, #7000		// slight delay to prevent multiple button presses in a row due to SNES sensitivity
+	bl	delayMicroseconds
+	b	draw_loop
 Right_Move:
-	ldr	r0, =paddle_location
-	ldr	r1, [r0]
-	add	r1, #1
-	str	r1, [r0]		// change paddle location's x
-	b	draw
+	teq released, #1
+	ldreq	r0, =paddle_location
+	ldreq	r1, [r0]
+	addeq	r1, #10
+	streq	r1, [r0]		// change paddle location's x
+	beq	draw
+	bne draw_loop
 Left_Move:
-	ldr	r0, =paddle_location
-	ldr	r1, [r0]
-	sub	r1, #1
-	str	r1, [r0]		// change paddle location's x
-	b	draw
+	teq released, #1
+	ldreq	r0, =paddle_location
+	ldreq	r1, [r0]
+	subeq	r1, #10
+	streq	r1, [r0]		// change paddle location's x
+	beq	draw
+	bne draw_loop
 Select_Move:
 	ldr	r0, =paddle_location
 	ldr	r1, [r0]
@@ -241,21 +263,29 @@ Select_Move:
 	mov	r1, #850
 	mov	r2, #864
 	str	r1, [r0]
-	str	r2, [r0, #4]		// change paddle location's y
+	str	r2, [r0, #4]		// change paddle location's y ?
 	b	draw
 B_Move:	
+/*
 	ldr	r0, =paddle_location
 	ldr	r1, [r0, #4]
 	ldr	r2, =frameBufferInfo
 	ldr	r2, [r2, #4]
 	sub	r1, r2
-	str	r1, [r0, #4]		// change paddle location's y
+	str	r1, [r0, #4]		// change paddle location's y ?
+*/
+	mov released, #1
+	b draw_loop
 
 draw:	
+//	ldr r0, =drawin
+//	mov r1, r4
+//	bl printf
+
 	mov r0, fp
 	bl draw_grid
 
-draw_paddle:
+//draw_paddle:
 	mov 	r0, #120
 	str 	r0, [fp, #12]
 	mov 	r0, #img_hi
@@ -284,8 +314,26 @@ draw_paddle:
 	b	draw_loop
 	
 end:	
-	pop 	{lr}
+	pop 	{r4, r5, lr}
 	bx 	lr
+
+
+// Args:
+//	r0 - tile row number
+//	r1 - tile number in row
+//	r2 - ball x coordinate
+//	r3 - ball y coordinate
+update_tile_state:
+	push {r4, lr}
+	mov r4, 
+
+	cmp r0, #0		// tile row 0
+	moveq r4, #tiles_minX
+	
+
+
+	pop {r4, lr}
+	bx lr
 
 
 width .req r4
@@ -403,6 +451,17 @@ frameBufferInfo:
 paddle_location:
 	.word	850		// x
 	.word 	850		// y
+
+
+tile_row0:	.word	0b10101010101010101010
+tile_row1:	.word	0x3ff
+tile_row2:	.word	0x3ff
+tile_row3:	.word	0x3ff
+tile_row4:	.word	0x3ff
+tile_row5:	.word	0x3ff
+
+
+//drawin: .string "Drawing. Delay = %d\n"
 
 .end
 
