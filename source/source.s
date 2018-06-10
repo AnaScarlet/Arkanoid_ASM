@@ -333,18 +333,19 @@ Right_Move:
 	ldr	r0, =paddle_location
 	ldr	r1, [r0]
 	add	r1, r2
-	ldr	r3, =#1098
+	ldr	r3, =#1092
 	cmp	r1, r3
-	movgt	r1, #1098
-	strle	r1, [r0]			// change paddle location's x
+	movgt	r1, #1092
+	str	r1, [r0]			// change paddle location's x
 	b	draw
 Left_Move:
 	ldr	r0, =paddle_location
 	ldr	r1, [r0]
 	sub	r1, r2
-	cmp	r1, #612
-	movlt	r1, #612
-	strge	r1, [r0]			// change paddle location's x
+	ldr 	r3, =#612
+	cmp	r1, r3
+	movlt	r1, r3
+	str	r1, [r0]
 	b	draw
 Start_Move:
 	bl	reset
@@ -568,7 +569,7 @@ lose_life:
 	str	r1, [r0]
 	cmp	r1, #0
 	ble	game_over
-//
+
 	str	r1, [r0]
 	bl	reset
 	b	move_ball_end
