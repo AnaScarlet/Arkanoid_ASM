@@ -30,57 +30,11 @@ main:
 	str r2, [fp, #4]		// screen width
 	str r3, [fp, #8]		// screen height
 
+////////////////////// initial screen ////////////////////////////////////////////
 	mov r1, #0			// x coordinate of image's top left corner
 	mov r2, #35			// y coordinate of image's top left corner
 	mov r3, fp
 	bl draw_black
-
-// draw initial numbers
-	mov r0, fp
-	mov r1, #0
-	ldr r2, =#702
-	mov r3, #48
-	bl draw_number
-
-	mov r0, fp
-	mov r1, #3
-	ldr r2, =#1172
-	mov r3, #48
-	bl draw_number
-
-	mov r0, fp
-	bl controller
-
-	add sp, #20
-	pop {fp, lr}
-	bx lr
-
-
-draw_grid:
-	push {r4, r5, r6, fp, lr}
-	mov fp, r0			// same as main's fp
-
-	mov r4, #612
-	mov r5, #127
-	mov r0, #img_wid
-	str r0, [fp, #12]
-	mov r0, #img_hi
-	str r0, [fp, #16]
-
-floor_loop:
-	bl get_floor_tile
-	mov r1, r4
-	mov r2, r5
-	mov r3, fp			// pass the address of stack variables
-	bl draw_img
-	add r4, #img_wid
-	cmp r4, #1152
-	ble floor_loop
-
-	mov r4, #612
-	add r5, #img_hi
-	cmp r5, #888
-	ble floor_loop
 
 	mov r4, #572
 	mov r5, #87
@@ -120,8 +74,58 @@ side_wall_loop:
 	movne r4, r0
 	movne r5, #127
 	bne side_wall_loop
+/*
+init_numbers:
+	mov r0, fp
+	mov r1, #0
+	ldr r2, =#702
+	mov r3, #48
+	bl draw_number
 
-next:	mov r4, #tiles_minX
+	mov r0, fp
+	mov r1, #3
+	ldr r2, =#1172
+	mov r3, #48
+	bl draw_number
+*/
+next:
+	mov r0, fp
+	bl controller
+
+	add sp, #20
+	pop {fp, lr}
+	bx lr
+
+count .req r8
+row_state .req r7
+
+draw_grid:
+	push {r4, r5, r6, fp, lr}
+	mov fp, r0			// same as main's fp
+
+	mov r4, #612
+	mov r5, #127
+	mov r0, #img_wid
+	str r0, [fp, #12]
+	mov r0, #img_hi
+	str r0, [fp, #16]
+
+floor_loop:
+	bl get_floor_tile
+	mov r1, r4
+	mov r2, r5
+	mov r3, fp			// pass the address of stack variables
+	bl draw_img
+	add r4, #img_wid
+	cmp r4, #1152
+	ble floor_loop
+
+	mov r4, #612
+	add r5, #img_hi
+	cmp r5, #888
+	ble floor_loop
+
+	mov r4, #tiles_minX
 	mov r5, #tile0_minY
 	mov r0, #img_wid
 	str r0, [fp, #12]
@@ -131,36 +135,67 @@ next:	mov r4, #tiles_minX
 	mov r6, r0
 
 bricks_loop:
-	mov r0, r6
-	mov r1, r4
-	mov r2, r5
-	mov r3, fp
-	bl draw_img
-	add r4, #img_wid
-	cmp r4, #1152
-	ble bricks_loop	
+		mov r0, #1
+		lsl r1, count, #1		// r1 = count * 3
+		add r2, r1, count
+		lsl r0, r2			// 1 at the tile's firt bit in row state
+		lsl r0, #2			// 1 at the tile's third bit in row state
+		and r1, row_state, r0		// row state (r7) AND bit mask (r0) = r1 (changes r1)
+		teq r1, r0			// if the tile's third bit was a 1
+		add count, #1			// increment counter
+		beq brick			// and go on to the next tile
+					// otherwise... draw the tile
+floor:		ldr r0, =get_floor_tile
+		mov r1, r4
+		mov r2, r5
+		mov r3, fp
+		bl draw_img
+		add r4, #img_wid
+		cmp r4, #1152
+		ble bricks_loop	
+		bgt outer
 
-	add r5, #40
+brick:		mov r0, r6
+		mov r1, r4
+		mov r2, r5
+		mov r3, fp
+		bl draw_img
+		add r4, #img_wid
+		cmp r4, #1152
+		ble bricks_loop	
+
+outer:	add r5, #40
 	mov r4, #tiles_minX
 	ldr r1, =#tile1_minY
 	cmp r5, r1
 	bleq get_red_brick
+	ldreq r7, =tile_row1		// get the row's state
+	ldreq row_state, [r7]
 	ldr r1, =#tile2_minY
 	cmp r5, r1
 	bleq get_purple_brick
+	ldreq r7, =tile_row2		// get the row's state
+	ldreq row_state, [r7]
 	ldr r1, =#tile3_minY
 	cmp r5, r1
 	bleq get_blue_brick
+	ldreq r7, =tile_row3		// get the row's state
+	ldreq row_state, [r7]
 	ldr r1, =#tile4_minY
 	cmp r5, r1
 	bleq get_yellow_brick
+	ldreq r7, =tile_row4		// get the row's state
+	ldreq row_state, [r7]
 	ldr r1, =#tile5_minY
 	cmp r5, r1
 	bleq get_green_brick
+	ldreq r7, =tile_row5		// get the row's state
+	ldreq row_state, [r7]
 
 	mov r6, r0
 	ldr r1, =#tile5_minY
 	cmp r5, r1
+	movle count, #0
 	ble bricks_loop
 
 	mov r0, #680
@@ -176,6 +211,7 @@ bricks_loop:
 
 	pop {r4, r5, r6, fp, lr}
 	bx lr
+
 
 delay .req r4
 released .req r5
@@ -306,8 +342,8 @@ Left_Move:
 	ldr	r0, =paddle_location
 	ldr	r1, [r0]
 	sub	r1, r2
-	cmp	r1, #608
-	movlt	r1, #608
+	cmp	r1, #612
+	movlt	r1, #612
 	strge	r1, [r0]			// change paddle location's x
 	b	draw
 Start_Move:
@@ -459,7 +495,8 @@ x_motion:
 	add	r0, r1
 	str	r0, [ball]
 
-	cmp	r0, #608		// check left bound
+	ldr 	r2, =#615
+	cmp	r0, r2		// check left bound
 	negle	r1, r1
 	strle	r1, [ball, #8]
 	
@@ -474,7 +511,7 @@ y_motion:
 	add	r0, r1
 	str	r0, [ball, #4]
 
-	cmp	r0, #127
+	cmp	r0, #130
 	negle	r1, r1
 	strle	r1, [ball, #12]
 
@@ -581,24 +618,191 @@ draw_ball:
 	pop	{fp, lr}
 	bx	lr
 	
+
 // Args:
 //	r0 - tile row number
-//	r1 - tile number in row
-//	r2 - ball x coordinate
-//	r3 - ball y coordinate
-/*
+//	r1 - tile number in row (countring from 0)
+//	r2 - ball y coordinate
+//	r3 - ball x coordinate
+// Returns:
+// 	Updates the state variables 
+
 update_tile_state:
-	push {r4, lr}
-	mov r4, 
+	push {r4, r5, r6, r7, r8, lr}
+	mov r4, #tiles_minX
 
 	cmp r0, #0		// tile row 0
-	moveq r4, #tiles_minX
-	
+	beq tile0
 
+	cmp r0, #1
+	beq tile1
 
-	pop {r4, lr}
+	cmp r0, #2
+	beq tile2
+
+	cmp r0, #3
+	beq tile3
+
+	cmp r0, #4
+	beq tile4
+
+	cmp r0, #5
+	beq tile5
+
+tile0:
+	ldr r8, =tile_row0
+	ldr r7, [r8]		// the current state of the tile row
+	mov r0, #60		
+	mul r0, r1
+	add r4, r0		// tile min x
+	add r6, r4, #60		// tile max x
+	mov r5, #tile0_minY	// tile y
+	cmp r5, r2		// if tile y  == ball y
+	bne fin
+	cmp r3, r6		// and if tile max x < ball x
+	bgt fin
+	cmp r3, r4		// and if tile min x > ball x
+	blt fin	
+	mov r0, #1		// then do a bit mask...
+	lsl r2, r1, #1		// r1*3 because tile_row0 has 30 bits affected instead of 10
+	add r1, r2, r1		// r1*3 = r1*2 + r1 = r2 + r1
+	lsl r0, r1		// 1 at the tile's first number in the row...
+	and r2, r7, r0
+	teq r2, r0		// if the tile has already been hit (1st bit from the right is 1)
+	bne skip		// if it hasn't been hit, skip next check and go to clear the bit
+	lsl r0, #1		// if it has been hit, shift r0 to check the next bit 
+	and r2, r7, r0		// resets r2
+	teq r2, r0		// if the tile has been hit twice
+	lsleq r0, #1		// shift r0 to clear the next bit (that the tile does not exist) 
+skip:	bic r7, r0		// clear the bit
+	orrne r7, r0		// otherwise, set the bit to 1 (that the tile has been hit)
+	str r7, [r8]
+	b fin
+
+tile1:
+	ldr r8, =tile_row1
+	ldr r7, [r8]		// the current state of the tile row
+	mov r0, #60		
+	mul r0, r1
+	add r4, r0		// tile min x
+	add r6, r4, #60		// tile max x
+	ldr r5, =#tile1_minY	// tile y
+	cmp r5, r2		// if tile y  == ball y
+	bne fin
+	cmp r3, r6		// and if tile max x < ball x
+	bgt fin
+	cmp r3, r4		// and if tile min x > ball x
+	blt fin	
+	mov r0, #1		// then do a bit mask...
+	lsl r2, r1, #1		// r1*3 because tile_row0 has 30 bits affected instead of 10
+	add r1, r2, r1		// r1*3 = r1*2 + r1 = r2 + r1
+	lsl r0, r1		// 1 at the tile's first number in the row...
+	and r2, r7, r0
+	teq r2, r0		// if the tile has already been hit (1st bit from the right is 1)
+	lsleq r0, #2		// shift r0 to clear the exists bit (that the tile does not exist) 
+	bic r7, r0		// clear the bit
+	orrne r7, r0		// otherwise, set the bit to 1 (that the tile has been hit)
+	str r7, [r8]
+	b fin
+
+tile2:
+	ldr r8, =tile_row2
+	ldr r7, [r8]		// the current state of the tile row
+	mov r0, #60		
+	mul r0, r1
+	add r4, r0		// tile min x
+	add r6, r4, #60		// tile max x
+	ldr r5, =#tile2_minY	// tile y
+	cmp r5, r2		// if tile y  == ball y
+	bne fin
+	cmp r3, r6		// and if tile max x < ball x
+	bgt fin
+	cmp r3, r4		// and if tile min x > ball x
+	blt fin	
+	mov r0, #1		// then do a bit mask...
+	lsl r2, r1, #1		// r1*3 because tile_row0 has 30 bits affected instead of 10
+	add r1, r2, r1		// r1*3 = r1*2 + r1 = r2 + r1
+	lsl r0, r1		// 1 at the tile's first number in the row...
+	and r2, r7, r0
+	teq r2, r0		// if the tile has already been hit (1st bit from the right is 1)
+	lsleq r0, #2		// shift r0 to clear the exists bit (that the tile does not exist) 
+	bic r7, r0		// clear the bit
+	orrne r7, r0		// otherwise, set the bit to 1 (that the tile has been hit)
+	str r7, [r8]
+	b fin
+
+tile3:
+	ldr r8, =tile_row3
+	ldr r7, [r8]		// the current state of the tile row
+	mov r0, #60		
+	mul r0, r1
+	add r4, r0		// tile min x
+	add r6, r4, #60		// tile max x
+	ldr r5, =#tile3_minY	// tile y
+	cmp r5, r2		// if tile y  == ball y
+	bne fin
+	cmp r3, r6		// and if tile max x < ball x
+	bgt fin
+	cmp r3, r4		// and if tile min x > ball x
+	blt fin	
+	mov r0, #1		// then do a bit mask...
+	lsl r2, r1, #1		// r1*3 because tile_row0 has 30 bits affected instead of 10
+	add r1, r2, r1		// r1*3 = r1*2 + r1 = r2 + r1
+	lsl r0, r1		// 1 at the tile's first number in the row...
+	lsl r0, #2		// shift r0 to clear the exists bit (that the tile does not exist)
+	bic r7, r0		// clear the bit
+	str r7, [r8]
+	b fin
+
+tile4:
+	ldr r8, =tile_row4
+	ldr r7, [r8]		// the current state of the tile row
+	mov r0, #60		
+	mul r0, r1
+	add r4, r0		// tile min x
+	add r6, r4, #60		// tile max x
+	ldr r5, =#tile4_minY	// tile y
+	cmp r5, r2		// if tile y  == ball y
+	bne fin
+	cmp r3, r6		// and if tile max x < ball x
+	bgt fin
+	cmp r3, r4		// and if tile min x > ball x
+	blt fin	
+	mov r0, #1		// then do a bit mask...
+	lsl r2, r1, #1		// r1*3 because tile_row0 has 30 bits affected instead of 10
+	add r1, r2, r1		// r1*3 = r1*2 + r1 = r2 + r1
+	lsl r0, r1		// 1 at the tile's first number in the row...
+	lsl r0, #2		// shift r0 to clear the exists bit (that the tile does not exist)
+	bic r7, r0		// clear the bit
+	str r7, [r8]
+	b fin
+
+tile5:
+	ldr r8, =tile_row5
+	ldr r7, [r8]		// the current state of the tile row
+	mov r0, #60		
+	mul r0, r1
+	add r4, r0		// tile min x
+	add r6, r4, #60		// tile max x
+	ldr r5, =#tile5_minY	// tile y
+	cmp r5, r2		// if tile y  == ball y
+	bne fin
+	cmp r3, r6		// and if tile max x < ball x
+	bgt fin
+	cmp r3, r4		// and if tile min x > ball x
+	blt fin	
+	mov r0, #1		// then do a bit mask...
+	lsl r2, r1, #1		// r1*3 because tile_row0 has 30 bits affected instead of 10
+	add r1, r2, r1		// r1*3 = r1*2 + r1 = r2 + r1
+	lsl r0, r1		// 1 at the tile's first number in the row...
+	lsl r0, #2		// shift r0 to clear the exists bit (that the tile does not exist)
+	bic r7, r0		// clear the bit
+	str r7, [r8]
+	b fin
+
+fin:	pop {r4, r5, r6, r7, r8, lr}
 	bx lr
-*/
+
 
 width .req r4
 height .req r5
@@ -732,12 +936,12 @@ ball_location:
 	.word	5		// x dir
 	.word	-5		// y dir
 	
-tile_row0:	.word	0b10101010101010101010
-tile_row1:	.word	0x3ff
-tile_row2:	.word	0x3ff
-tile_row3:	.word	0x3ff
-tile_row4:	.word	0x3ff
-tile_row5:	.word	0x3ff
+tile_row0:	.word	0b100100100100100100100100100100		// hardness level 3
+tile_row1:	.word	0x24924924					// hardness level 2
+tile_row2:	.word	0x24924924
+tile_row3:	.word	0x24924924					// hardness level 1
+tile_row4:	.word	0x24924924
+tile_row5:	.word	0x24924924
 
 menu_flag:	.word	0
 menu_option:	.word	0
