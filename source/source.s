@@ -208,6 +208,11 @@ draw_loop:					// infinite loop
 
 	bl	Read_SNES
 
+	ldr	r1, =Lose_Flag
+	ldr	r2, [r1]
+	cmp	r2, #1
+	beq	lose_options
+	
 	ldr	r1, =menu_flag
 	ldr	r1, [r1]
 
@@ -306,21 +311,7 @@ Left_Move:
 	strge	r1, [r0]			// change paddle location's x
 	b	draw
 Start_Move:
-	ldr	r0, =paddle_location		// reset paddle location
-	mov	r1, #850
-	str	r1, [r0]
-	str	r1, [r0, #4]
-
-	ldr	r0, =ball_location		// reset ball location
-	mov	r1, #895
-	str	r1, [r0]
-	mov	r1, #820
-	str	r1, [r0, #4]
-	mov	r1, #5
-	str	r1, [r0, #8]
-	mov	r1, #-5
-	str	r1, [r0, #12]
-
+	bl	reset
 	mov 	released, #0			// reset b flag
 
 	b	draw
@@ -332,8 +323,8 @@ Select_Move:
 	ldr	r0, =menu_option
 	str	r1, [r0]
 
+	bl	reset
 	mov	released, #0
-	mov	r0, fp
 	
 //	bl	init_draw
 	b	draw
@@ -342,6 +333,22 @@ B_Move:
 	mov released, #1
 	b draw
 
+lose_options:
+	cmp	r0, #0
+	beq	draw_loop
+
+	mov	r0, #0
+	mov	released, r0
+	str	r0, [r1]
+	ldr	r1, =menu_flag
+	str	r0, [r1]
+	ldr	r1, =menu_option
+	str	r0, [r1]
+	bl	reset
+	mov	r0, #20000
+	bl	delayMicroseconds
+	b	draw
+	
 draw:	
 	ldr	r0, =menu_flag
 	ldr	r0, [r0]
@@ -385,7 +392,9 @@ draw_cont:
 	bl draw_number
 
 	mov r0, fp
-	mov r1, #3
+//	mov r1, #3
+	ldr	r1, =lives
+	ldr	r1, [r1]
 	ldr r2, =#1172
 	mov r3, #48
 	bl draw_number
@@ -393,6 +402,7 @@ draw_cont:
 	mov	r0, fp
 	mov	r1, released
 	bl	move_ball
+	mov	released, r0
 	
 	mov	r0, fp
 	mov	r1, released
@@ -404,6 +414,25 @@ end:
 	pop 	{r4, r5, lr}
 	bx 	lr
 /////////////////////////////////////////////////////////////////////////
+reset:
+	ldr	r0, =paddle_location		// reset paddle location
+	mov	r1, #850
+	str	r1, [r0]
+	str	r1, [r0, #4]
+
+	ldr	r0, =ball_location		// reset ball location
+	mov	r1, #895
+	str	r1, [r0]
+	mov	r1, #820
+	str	r1, [r0, #4]
+	mov	r1, #5
+	str	r1, [r0, #8]
+	mov	r1, #-5
+	str	r1, [r0, #12]
+
+	bx	lr
+	
+////////////////////////////////////////////////////////////////////////////	
 move_ball:
 	push	{r6, r7, fp, lr}
 
@@ -455,6 +484,7 @@ y_motion:
 	ldr	r2, =#820
 	cmp	r0, r2
 	bge	check_paddle
+	mov	r0, #1
 	b	move_ball_end
 	
 check_paddle:
@@ -465,20 +495,23 @@ check_paddle:
 	ble	lose_life
 	cmp	r0, #-1
 	ble	left_side_hit
-	cmp	r0, #92
-	bge	right_side_hit
 	cmp	r0, #120
-	bge	lose_life
-// ball hit paddle
+	bgt	lose_life
+	cmp	r0, #92
+	bgt	right_side_hit
+	
+// ball hit middle of paddle
 	ldr	r0, [ball, #12]
 	neg	r0, r0
 	str	r0, [ball, #12]
+	mov	r0, #1			// return #1
 	b	move_ball_end
 
 left_side_hit:
 	mov	r1, #-5
 	str	r1, [ball, #8]
 	str	r1, [ball, #12]
+	mov	r0, #1			// return #1
 	b	move_ball_end
 
 right_side_hit:
@@ -486,6 +519,7 @@ right_side_hit:
 	str	r1, [ball, #8]
 	mov	r1, #-5
 	str	r1, [ball, #12]
+	mov	r0, #1			// return #1
 	b	move_ball_end
 	
 check_bricks:
@@ -493,22 +527,37 @@ check_bricks:
 lose_life:
 	ldr	r0, =lives
 	ldr	r1, [r0]
+	sub	r1, #1	
+	str	r1, [r0]
 	cmp	r1, #0
 	ble	game_over
-	
-	sub	r1, #1
+//
+	str	r1, [r0]
+	bl	reset
 	b	move_ball_end
 
 game_over:
+	mov	r0, fp
+	ldr r2, =#1172
+	mov r3, #48
+	bl draw_number	
+
 	ldr	r0, =Lose_Flag
 	ldr	r1, [r0]
 	mov	r1, #1
 	str	r1, [r0]
-	mov	r0, #30000
-	bl	delayMicroseconds
-	ldr	r0, =menu_flag
-	mov	r1, #0
-	str	r1, [r0]
+// reset ball, paddle, score, lives
+	bl	reset
+	mov	r0, #0
+	ldr	r1, =score
+	str	r0, [r1]
+	mov	r0, #3
+	ldr	r1, =lives
+	str	r0, [r1]
+	
+	bl	gameOver_screen
+
+	mov	r0, #0
 
 move_ball_end:	
 	pop	{r6, r7, fp, lr}
