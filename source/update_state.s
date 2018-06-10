@@ -13,39 +13,39 @@ tile5_minY = 447
 main:
 	push {lr}
 
-	mov r0, #0
-	mov r1, #1
-	ldr r2, =#247
-	ldr r3, =#655
+	mov r0, #2		// y
+	mov r1, #2		// x
+	ldr r2, =#327
+	ldr r3, =#765
 	bl update_tile_state
 
 	ldr r0, =print_tile
-	mov r1, #0
-	ldr r2, =tile_row0
+	mov r1, #2
+	ldr r2, =tile_row2
 	ldr r2, [r2]		// the actual hex value of the tile row state variable 
 	bl printf
 
-	mov r0, #0
+	mov r0, #3
 	mov r1, #1
-	ldr r2, =#247
-	ldr r3, =#655
+	ldr r2, =#367
+	ldr r3, =#705
 	bl update_tile_state
 
 	ldr r0, =print_tile
-	mov r1, #0
-	ldr r2, =tile_row0
+	mov r1, #3
+	ldr r2, =tile_row3
 	ldr r2, [r2]		// the actual hex value of the tile row state variable 
 	bl printf
 
-	mov r0, #0
-	mov r1, #1
-	ldr r2, =#247
-	ldr r3, =#655
+	mov r0, #2
+	mov r1, #2
+	ldr r2, =#327
+	ldr r3, =#765
 	bl update_tile_state
 
 	ldr r0, =print_tile
-	mov r1, #0
-	ldr r2, =tile_row0
+	mov r1, #2
+	ldr r2, =tile_row2
 	ldr r2, [r2]		// the actual hex value of the tile row state variable 
 	bl printf
 
@@ -86,10 +86,10 @@ update_tile_state:
 tile0:
 	ldr r8, =tile_row0
 	ldr r7, [r8]		// the current state of the tile row
-	mov r0, #40		
+	mov r0, #60		
 	mul r0, r1
 	add r4, r0		// tile min x
-	add r6, r4, #40		// tile max x
+	add r6, r4, #60		// tile max x
 	mov r5, #tile0_minY	// tile y
 	cmp r5, r2		// if tile y  == ball y
 	bne fin
@@ -116,10 +116,10 @@ skip:	bic r7, r0		// clear the bit
 tile1:
 	ldr r8, =tile_row1
 	ldr r7, [r8]		// the current state of the tile row
-	mov r0, #40		
+	mov r0, #60		
 	mul r0, r1
 	add r4, r0		// tile min x
-	add r6, r4, #40		// tile max x
+	add r6, r4, #60		// tile max x
 	ldr r5, =#tile1_minY	// tile y
 	cmp r5, r2		// if tile y  == ball y
 	bne fin
@@ -128,11 +128,12 @@ tile1:
 	cmp r3, r4		// and if tile min x > ball x
 	blt fin	
 	mov r0, #1		// then do a bit mask...
-	lsl r1, #1		// r1*2 because tile_row1 has 20 bits affected instead of 10
-	lsl r0, r1		// 1 at the tile's number in the row...
+	lsl r2, r1, #1		// r1*3 because tile_row0 has 30 bits affected instead of 10
+	add r1, r2, r1		// r1*3 = r1*2 + r1 = r2 + r1
+	lsl r0, r1		// 1 at the tile's first number in the row...
 	and r2, r7, r0
-	teq r2, r0		// if the tile has already been hit
-	lsleq r0, #1		// shift r0 to clear the next bit (that the tile does not exist) 
+	teq r2, r0		// if the tile has already been hit (1st bit from the right is 1)
+	lsleq r0, #2		// shift r0 to clear the exists bit (that the tile does not exist) 
 	bic r7, r0		// clear the bit
 	orrne r7, r0		// otherwise, set the bit to 1 (that the tile has been hit)
 	str r7, [r8]
@@ -141,10 +142,10 @@ tile1:
 tile2:
 	ldr r8, =tile_row2
 	ldr r7, [r8]		// the current state of the tile row
-	mov r0, #40		
+	mov r0, #60		
 	mul r0, r1
 	add r4, r0		// tile min x
-	add r6, r4, #40		// tile max x
+	add r6, r4, #60		// tile max x
 	ldr r5, =#tile2_minY	// tile y
 	cmp r5, r2		// if tile y  == ball y
 	bne fin
@@ -153,11 +154,12 @@ tile2:
 	cmp r3, r4		// and if tile min x > ball x
 	blt fin	
 	mov r0, #1		// then do a bit mask...
-	lsl r1, #1		// r1*2 because tile_row2 has 20 bits affected instead of 10
-	lsl r0, r1		// 1 at the tile's number in the row...
+	lsl r2, r1, #1		// r1*3 because tile_row0 has 30 bits affected instead of 10
+	add r1, r2, r1		// r1*3 = r1*2 + r1 = r2 + r1
+	lsl r0, r1		// 1 at the tile's first number in the row...
 	and r2, r7, r0
-	teq r2, r0		// if the tile has already been hit
-	lsleq r0, #1		// shift r0 to clear the next bit (that the tile does not exist) 
+	teq r2, r0		// if the tile has already been hit (1st bit from the right is 1)
+	lsleq r0, #2		// shift r0 to clear the exists bit (that the tile does not exist) 
 	bic r7, r0		// clear the bit
 	orrne r7, r0		// otherwise, set the bit to 1 (that the tile has been hit)
 	str r7, [r8]
@@ -166,10 +168,10 @@ tile2:
 tile3:
 	ldr r8, =tile_row3
 	ldr r7, [r8]		// the current state of the tile row
-	mov r0, #40		
+	mov r0, #60		
 	mul r0, r1
 	add r4, r0		// tile min x
-	add r6, r4, #40		// tile max x
+	add r6, r4, #60		// tile max x
 	ldr r5, =#tile3_minY	// tile y
 	cmp r5, r2		// if tile y  == ball y
 	bne fin
@@ -178,7 +180,10 @@ tile3:
 	cmp r3, r4		// and if tile min x > ball x
 	blt fin	
 	mov r0, #1		// then do a bit mask...
-	lsl r0, r1		// 1 at the tile's number in the row...
+	lsl r2, r1, #1		// r1*3 because tile_row0 has 30 bits affected instead of 10
+	add r1, r2, r1		// r1*3 = r1*2 + r1 = r2 + r1
+	lsl r0, r1		// 1 at the tile's first number in the row...
+	lsl r0, #2		// shift r0 to clear the exists bit (that the tile does not exist)
 	bic r7, r0		// clear the bit
 	str r7, [r8]
 	b fin
@@ -186,10 +191,10 @@ tile3:
 tile4:
 	ldr r8, =tile_row4
 	ldr r7, [r8]		// the current state of the tile row
-	mov r0, #40		
+	mov r0, #60		
 	mul r0, r1
 	add r4, r0		// tile min x
-	add r6, r4, #40		// tile max x
+	add r6, r4, #60		// tile max x
 	ldr r5, =#tile4_minY	// tile y
 	cmp r5, r2		// if tile y  == ball y
 	bne fin
@@ -198,7 +203,10 @@ tile4:
 	cmp r3, r4		// and if tile min x > ball x
 	blt fin	
 	mov r0, #1		// then do a bit mask...
-	lsl r0, r1		// 1 at the tile's number in the row...
+	lsl r2, r1, #1		// r1*3 because tile_row0 has 30 bits affected instead of 10
+	add r1, r2, r1		// r1*3 = r1*2 + r1 = r2 + r1
+	lsl r0, r1		// 1 at the tile's first number in the row...
+	lsl r0, #2		// shift r0 to clear the exists bit (that the tile does not exist)
 	bic r7, r0		// clear the bit
 	str r7, [r8]
 	b fin
@@ -206,10 +214,10 @@ tile4:
 tile5:
 	ldr r8, =tile_row5
 	ldr r7, [r8]		// the current state of the tile row
-	mov r0, #40		
+	mov r0, #60		
 	mul r0, r1
 	add r4, r0		// tile min x
-	add r6, r4, #40		// tile max x
+	add r6, r4, #60		// tile max x
 	ldr r5, =#tile5_minY	// tile y
 	cmp r5, r2		// if tile y  == ball y
 	bne fin
@@ -218,9 +226,13 @@ tile5:
 	cmp r3, r4		// and if tile min x > ball x
 	blt fin	
 	mov r0, #1		// then do a bit mask...
-	lsl r0, r1		// 1 at the tile's number in the row...
+	lsl r2, r1, #1		// r1*3 because tile_row0 has 30 bits affected instead of 10
+	add r1, r2, r1		// r1*3 = r1*2 + r1 = r2 + r1
+	lsl r0, r1		// 1 at the tile's first number in the row...
+	lsl r0, #2		// shift r0 to clear the exists bit (that the tile does not exist)
 	bic r7, r0		// clear the bit
 	str r7, [r8]
+	b fin
 
 fin:	pop {r4, r5, r6, r7, r8, lr}
 	bx lr
@@ -230,11 +242,11 @@ fin:	pop {r4, r5, r6, r7, r8, lr}
 .section .data
 
 tile_row0:	.word	0b100100100100100100100100100100		// hardness level 3
-tile_row1:	.word	0b10101010101010101010				// hardness level 2
-tile_row2:	.word	0xaaaaa
-tile_row3:	.word	0b1111111111					// hardness level 1
-tile_row4:	.word	0x3ff
-tile_row5:	.word	0x3ff
+tile_row1:	.word	0x24924924					// hardness level 2
+tile_row2:	.word	0x24924924
+tile_row3:	.word	0x24924924					// hardness level 1
+tile_row4:	.word	0x24924924
+tile_row5:	.word	0x24924924
 
 print_tile: .string "Tile row %d: %#08x \n"
 
