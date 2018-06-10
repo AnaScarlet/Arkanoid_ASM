@@ -216,9 +216,7 @@ feedback:
 	bic	r0, r0, r5			// bic NoBtns with r5 into r0
 	bic	r0, stream, r0			// bic stream with r0 into r0
 	cmp	r0, #0				// compare r0 to #0
-	bne	skip				// branch to skip if button wasn't pressed
 	beq	right
-skip:
 // skip if button was not pressed
 	sub	r4, #1				// decrement loop counter
 	lsl	r5, #1				// shift r5 left by 1
@@ -244,8 +242,7 @@ x:
 a:
 	cmp	r4, #8
 	bne	j_right
-	mov	r0, #A
-	b	stop
+	b 	a_left
 j_right:
 	cmp	r4, #7
 	bne	j_left
@@ -259,12 +256,12 @@ j_left:
 j_down:
 	cmp	r4, #5
 	bne	j_up
-	mov	r0, #Other
+	mov	r0, #J_down
 	b	stop
 j_up:
 	cmp	r4, #4
 	bne	start
-	mov	r0, #Other
+	mov	r0, #J_up
 	b	stop
 start:
 	cmp	r4, #3
@@ -284,6 +281,22 @@ y:
 b:
 	mov	r0, #Bee
 	b	stop
+a_left:
+// bit clear stream except for the bit being checked, then check if it was pressed
+	ldr	r0, =#0xFDFF			// load NoBtns value to r0
+	bic	r0, stream, r0			// bic stream with r0 into r0
+	cmp	r0, #0				// compare r0 to #0
+	moveq	r0, #A_Left
+	bne	a_right
+	b	stop
+a_right:
+// bit clear stream except for the bit being checked, then check if it was pressed
+	ldr	r0, =#0xFEFF			// load NoBtns value to r0
+	bic	r0, stream, r0			// bic stream with r0 into r0
+	cmp	r0, #0				// compare r0 to #0
+	movne	r0, #A
+	moveq	r0, #A_Right
+	b	stop
 no_input:
 	mov	r0, #No_btn
 stop:	
@@ -301,7 +314,6 @@ GpioPtr:
 	.int	0
 NoBtns:
 	.int	0xFFFF
-
 print:
 	.string	"%d\n\n"
 
@@ -313,3 +325,7 @@ print:
 	Start	= 5
 	Select	= 6
 	Bee	= 7
+	A_Left	= 8
+	A_Right	= 9
+	J_up	= 10
+	J_down	= 11
