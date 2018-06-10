@@ -74,20 +74,7 @@ side_wall_loop:
 	movne r4, r0
 	movne r5, #127
 	bne side_wall_loop
-/*
-init_numbers:
-	mov r0, fp
-	mov r1, #0
-	ldr r2, =#702
-	mov r3, #48
-	bl draw_number
 
-	mov r0, fp
-	mov r1, #3
-	ldr r2, =#1172
-	mov r3, #48
-	bl draw_number
-*/
 next:
 	mov r0, fp
 	bl controller
@@ -122,6 +109,11 @@ floor_loop:
 
 	mov r4, #612
 	add r5, #img_hi
+	cmp r5, #207
+	ble floor_loop
+	ldr r0, =#487
+	cmp r5, r0
+	movlt r5, r0
 	cmp r5, #888
 	ble floor_loop
 
