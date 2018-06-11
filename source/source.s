@@ -573,46 +573,35 @@ right_side_hit:
 	b	move_ball_end
 	
 check_brick:
+	ldr	r0, [ball]
+	bl	divFuncX
+	mov	r1, r0
 	ldr	r0, [ball, #4]
-	ldr	r2, =#245
-	sub	r2, r0, r2
-	asr	r2, #5			// divide by 32
-	sub	r2, #1
-	
-//
-	ldr	r1, [ball]
-	ldr	r3, =#612
-	sub	r3, r1, r3	
-	asr	r3, #6			// divide by 64
-
-	push	{r2, r3}
-	mov	r0, r2
-	mov	r1, r3
+	bl	divFuncY
 	bl	check_brick_state
 
 	cmp	r0, #0
 	beq	hit_brick
 
-	pop	{r2, r3}
 	mov	r0, #1
 	b	move_ball_end
-
 	
 hit_brick:
 	ldr	r3, [ball]
 	ldr	r2, [ball, #4]
-	pop	{r0, r1}
-
-	push	{r0, r1, r2, r3}
+	push	{r0, r1}
 	bl	update_tile_state
-	pop	{r0, r1, r2, r3}
 
 //	ballx = r0, bally = r1, col = r2, row = r3
 check_x:
+	ldr	r0, [ball]
+	ldr	r1, [ball, #4]
+	pop	{r2, r3}
 	mov	r4, #60
 	mul	r4, r2, r4
 	add	r4, #612
 	sub	r4, r1, r4		// r4 = ballx - brick left edge
+	
 	cmp	r4, #0
 	ble	neg_x
 	cmpgt	r4, #45
