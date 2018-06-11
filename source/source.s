@@ -132,7 +132,10 @@ floor_loop:
 	mov r0, #img_hi
 	str r0, [fp, #16]
 	bl get_gray_brick
+	ldr r7, =tile_row0		// get the row's state
+	ldr row_state, [r7]
 	mov r6, r0
+	mov count, #0
 
 bricks_loop:
 	mov r0, #1
@@ -168,38 +171,37 @@ brick:
 
 outer:	add r5, #40
 	mov r4, #tiles_minX
-	ldr r1, =#tile0_minY
-	cmp r5, r1
-	bleq get_gray_brick
-	ldreq r7, =tile_row0		// get the row's state
-	ldreq row_state, [r7]
 	ldr r1, =#tile1_minY
 	cmp r5, r1
 	bleq get_red_brick
 	ldreq r7, =tile_row1		// get the row's state
 	ldreq row_state, [r7]
+	beq o_end
 	ldr r1, =#tile2_minY
 	cmp r5, r1
 	bleq get_purple_brick
 	ldreq r7, =tile_row2		// get the row's state
 	ldreq row_state, [r7]
+	beq o_end
 	ldr r1, =#tile3_minY
 	cmp r5, r1
 	bleq get_blue_brick
 	ldreq r7, =tile_row3		// get the row's state
 	ldreq row_state, [r7]
+	beq o_end
 	ldr r1, =#tile4_minY
 	cmp r5, r1
 	bleq get_yellow_brick
 	ldreq r7, =tile_row4		// get the row's state
 	ldreq row_state, [r7]
+	beq o_end
 	ldr r1, =#tile5_minY
 	cmp r5, r1
 	bleq get_green_brick
 	ldreq r7, =tile_row5		// get the row's state
 	ldreq row_state, [r7]
 
-	mov r6, r0
+o_end:	mov r6, r0
 	ldr r1, =#tile5_minY
 	cmp r5, r1
 	movle count, #0
@@ -598,12 +600,6 @@ hit_brick:
 
 	bl	update_tile_state
 
-	push {r0, r1, r2, r3}
-	ldr r1, =tile_row0
-	ldr r1, [r1]
-	ldr r0, =printx
-	bl printf
-	pop {r0, r1, r2, r3}
 
 //	ballx = r0, bally = r1, col = r2, row = r3
 check_x:
