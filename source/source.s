@@ -12,6 +12,13 @@ tile3_minY = 367
 tile4_minY = 407
 tile5_minY = 447
 
+tile0_maxY = 287 
+tile1_maxY = 327
+tile2_maxY = 367
+tile3_maxY = 407
+tile4_maxY = 447
+tile5_maxY = 487
+
 
 main:
 	push {fp, lr}
@@ -74,20 +81,7 @@ side_wall_loop:
 	movne r4, r0
 	movne r5, #127
 	bne side_wall_loop
-/*
-init_numbers:
-	mov r0, fp
-	mov r1, #0
-	ldr r2, =#702
-	mov r3, #48
-	bl draw_number
 
-	mov r0, fp
-	mov r1, #3
-	ldr r2, =#1172
-	mov r3, #48
-	bl draw_number
-*/
 next:
 	mov r0, fp
 	bl controller
@@ -174,6 +168,11 @@ brick:
 
 outer:	add r5, #40
 	mov r4, #tiles_minX
+	ldr r1, =#tile0_minY
+	cmp r5, r1
+	bleq get_gray_brick
+	ldreq r7, =tile_row0		// get the row's state
+	ldreq row_state, [r7]
 	ldr r1, =#tile1_minY
 	cmp r5, r1
 	bleq get_red_brick
@@ -531,7 +530,7 @@ y_motion:
 	cmp	r0, r2
 	bge	check_paddle
 	cmp	r0, #247
-	ldr	r1, =#487
+	ldrge	r1, =#487
 	cmpge	r0, r1
 	ble	check_brick
 	mov	r0, #1
@@ -578,19 +577,33 @@ check_brick:
 	mov	r1, r0
 	ldr	r0, [ball, #4]
 	bl	divFuncY
+	//add 	r0, #15
+	//add 	r1, #15
+	push 	{r0, r1}
 	bl	check_brick_state
 
-	cmp	r0, #0
+
+	cmp	r0, #1
 	beq	hit_brick
 
+	pop 	{r0, r1}
 	mov	r0, #1
 	b	move_ball_end
 	
 hit_brick:
+	pop 	{r0, r1}
 	ldr	r3, [ball]
 	ldr	r2, [ball, #4]
 	push	{r0, r1}
+
 	bl	update_tile_state
+
+	push {r0, r1, r2, r3}
+	ldr r1, =tile_row0
+	ldr r1, [r1]
+	ldr r0, =printx
+	bl printf
+	pop {r0, r1, r2, r3}
 
 //	ballx = r0, bally = r1, col = r2, row = r3
 check_x:
@@ -600,18 +613,38 @@ check_x:
 	mov	r4, #60
 	mul	r4, r2, r4
 	add	r4, #612
-	sub	r4, r1, r4		// r4 = ballx - brick left edge
+	sub	r4, r0, r4		// r4 = ballx - brick left edge
 	
-	cmp	r4, #0
+	cmp	r4, #-15
+//	beq	neg_x
+//	cmp	r4, #45
+//	beq	neg_x
+//	b	check_y
 	ble	neg_x
 	cmpgt	r4, #45
 	bgt	neg_x
 	
+neg_y:
 	ldr	r0, [ball, #8]
 	neg	r0, r0
 	str	r0, [ball, #8]
 	b	end_hit_brick
 	
+check_y:
+	mov	r4, #40
+	mul	r4, r3
+	add	r4, #247
+	sub	r4, r1, r4
+
+	cmp	r4, #-15
+//	beq	neg_y
+//	cmp	r4, #25
+//	beq	neg_y
+//	b	end_hit_brick
+	ble	neg_y
+	cmpgt	r4, #25
+	bgt	neg_y
+
 neg_x:
 	ldr	r0, [ball, #12]
 	neg	r0, r0
@@ -671,17 +704,23 @@ check_brick_state:
 	row_s	.req	r2
 	
 	cmp 	row, #0			// tile row 0
-	ldr	row_s, =tile_row0
+	ldreq	row_s, =tile_row0
+	ldreq	row_s, [row_s]
 	cmp 	row, #1
-	ldr	row_s, =tile_row1
+	ldreq	row_s, =tile_row1
+	ldreq	row_s, [row_s]
 	cmp	row, #2
-	ldr	row_s, =tile_row2
+	ldreq	row_s, =tile_row2
+	ldreq	row_s, [row_s]
 	cmp 	row, #3
-	ldr	row_s, =tile_row3
+	ldreq	row_s, =tile_row3
+	ldreq	row_s, [row_s]
 	cmp 	row, #4
-	ldr	row_s, =tile_row4
+	ldreq	row_s, =tile_row4
+	ldreq	row_s, [row_s]
 	cmp 	row, #5
-	ldr	row_s, =tile_row5
+	ldreq	row_s, =tile_row5
+	ldreq	row_s, [row_s]
 
 	mov	r3, #3
 	mul	r3, column, r3		// r3 = column * 3
@@ -690,8 +729,8 @@ check_brick_state:
 	lsl 	r0, r3			// 1 at the tile's first bit in row state
 	lsl	r0, #2			// 1 at the tile's third bit in row state
 
-	and 	r3, row_s, r0		// row state (r3) AND bit mask (r1) = r2 (changes r3)
-	teq 	r3, r1			// if the tile's third bit was a 1
+	and 	r3, row_s, r0		// row state (row_s) AND bit mask (r0) = r3 (changes r3)
+	teq 	r3, r0			// if the tile's third bit was a 1
 	moveq	r0, #1
 	movne	r0, #0
 	
@@ -833,6 +872,8 @@ print:
 	.string	"%d\n"
 printn:
 	.string	"%d	%d\n"
+printx:
+	.string	"state: %#08x\n"
 here:
 	.string	"Here\n"
 frameBufferInfo:
