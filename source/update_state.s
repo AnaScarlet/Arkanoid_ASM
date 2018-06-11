@@ -2,12 +2,12 @@
 .section .text
 
 tiles_minX = 612
-tile0_maxY = 247 
-tile1_maxY = 287
-tile2_maxY = 327
-tile3_maxY = 367
-tile4_maxY = 407
-tile5_maxY = 447
+tile0_maxY = 287 
+tile1_maxY = 327
+tile2_maxY = 367
+tile3_maxY = 407
+tile4_maxY = 447
+tile5_maxY = 487
 
 /*
 main:
@@ -54,7 +54,7 @@ main:
 */
 
 // Args:
-//	r0 - tile row number
+//	r0 - tile row number (counting from 0)
 //	r1 - tile number in row (countring from 0)
 //	r2 - ball y coordinate
 //	r3 - ball x coordinate
@@ -64,7 +64,7 @@ main:
 update_tile_state:
 	push {r4, r5, r6, r7, r8, r9, lr}
 	mov r4, #tiles_minX
-//	lsr r1, #1		// for using as the bit offset
+//	sub r0, #1		// to make sure count is from 0!
 
 	cmp r0, #0		// tile row 0
 	beq tile0
@@ -98,9 +98,10 @@ tile0:
 	blt n0			// fail and check next condition
 	cmp r9, r2		// and if tile min y >= ball min y
 	ble n01			// pass condition if tile min y <= ball min y 
-	add r2, #30		// ball max y
+//	add r2, #30		// ball max y
 // second y condition:
-n0:	cmp r5, r2		// if tile max y =< ball max y
+n0:	add r2, #30		// ball max y
+	cmp r5, r2		// if tile max y =< ball max y
 	bgt fin			// quit if tile min y > ball max y
 	cmp r9, r2		// if tile min y >= ball max y
 	blt fin			// quit if tile min y < ball max y 
@@ -138,9 +139,10 @@ tile1:
 	blt n1			// fail and check next condition
 	cmp r9, r2		// and if tile min y >= ball min y
 	ble n11			// pass condition if tile min y <= ball min y 
-	add r2, #30		// ball max y
+//	add r2, #30		// ball max y
 // second y condition:
-n1:	cmp r5, r2		// if tile max y =< ball max y
+n1:	add r2, #30		// ball max y
+	cmp r5, r2		// if tile max y =< ball max y
 	bgt fin			// quit if tile min y > ball max y
 	cmp r9, r2		// if tile min y >= ball max y
 	blt fin			// quit if tile min y < ball max y 
@@ -174,9 +176,10 @@ tile2:
 	blt n2			// fail and check next condition
 	cmp r9, r2		// and if tile min y >= ball min y
 	ble n21			// pass condition if tile min y <= ball min y 
-	add r2, #30		// ball max y
+//	add r2, #30		// ball max y
 // second y condition:
-n2:	cmp r5, r2		// if tile max y =< ball max y
+n2:	add r2, #30		// ball max y
+	cmp r5, r2		// if tile max y =< ball max y
 	bgt fin			// quit if tile min y > ball max y
 	cmp r9, r2		// if tile min y >= ball max y
 	blt fin			// quit if tile min y < ball max y 
@@ -210,9 +213,10 @@ tile3:
 	blt n3			// fail and check next condition
 	cmp r9, r2		// and if tile min y >= ball min y
 	ble n31			// pass condition if tile min y <= ball min y 
-	add r2, #30		// ball max y
+//	add r2, #30		// ball max y
 // second y condition:
-n3:	cmp r5, r2		// if tile max y =< ball max y
+n3:	add r2, #30		// ball max y
+	cmp r5, r2		// if tile max y =< ball max y
 	bgt fin			// quit if tile min y > ball max y
 	cmp r9, r2		// if tile min y >= ball max y
 	blt fin			// quit if tile min y < ball max y 
@@ -243,9 +247,10 @@ tile4:
 	blt n4			// fail and check next condition
 	cmp r9, r2		// and if tile min y >= ball min y
 	ble n41			// pass condition if tile min y <= ball min y 
-	add r2, #30		// ball max y
+//	add r2, #30		// ball max y
 // second y condition:
-n4:	cmp r5, r2		// if tile max y =< ball max y
+n4:	add r2, #30		// ball max y
+	cmp r5, r2		// if tile max y =< ball max y
 	bgt fin			// quit if tile min y > ball max y
 	cmp r9, r2		// if tile min y >= ball max y
 	blt fin			// quit if tile min y < ball max y 
@@ -276,9 +281,9 @@ tile5:
 	blt n5			// fail and check next condition
 	cmp r9, r2		// and if tile min y >= ball min y
 	ble n51			// pass condition if tile min y <= ball min y 
-	add r2, #30		// ball max y
 // second y condition:
-n5:	cmp r5, r2		// if tile max y =< ball max y
+n5:	add r2, #30		// ball max y
+	cmp r5, r2		// if tile max y =< ball max y
 	bgt fin			// quit if tile min y > ball max y
 	cmp r9, r2		// if tile min y >= ball max y
 	blt fin			// quit if tile min y < ball max y 
