@@ -568,45 +568,19 @@ right_side_hit:
 	
 check_brick:
 	ldr	r0, [ball, #4]
-	sub	r2, #247
+	ldr	r2, =#262
+	sub	r2, r0, r2
 	asr	r1, r2, #5		// divide by 40
 	asr	r2, #3
 	sub	r2, r1				// 
-
+//
 	ldr	r1, [ball]
-	sub	r3, #612
+	ldr	r3, =#627
+	sub	r3, r1, r3
 	lsl	r4, r3, #2		// divide by 60
 	asr	r3, r3, #6
 	add	r3, r4
 //
-	push	{r2, r3}
-	b	hit_brick
-	
-//	ballx = r0, bally = r1, col = r2, row = r3
-/*
-check_x:
-	mul	r4, r2, #60
-	add	r4, 612
-	sub	r4, r1, r4		// r4 = ballx - brick left edge
-	cmp	r4, #-15
-	ble	check_x1
-	
-	
-check_x1:
-	sub	r2, #1
-	push	{r0, r1, r2, r3}
-	
-	
-	bl	check_brick_state
-	
-	sublt	r2, #1
-	blt	check_x
-	cmpge	r4, #45
-	
-
-check_y:
-	
-
 	push	{r0, r1}
 	bl	check_brick_state
 
@@ -616,15 +590,49 @@ check_y:
 	pop	{r0, r1}
 	mov	r0, #1
 	b	move_ball_end
-*/
-hit_brick:
-	ldr	r3, [ball]
-	ldr	r3, [r3]
-	ldr	r2, [ball, #4]
-	ldr	r2, [r2]	
-	pop	{r0, r1}
 
+	
+hit_brick:
+	ldr	r0, [ball]
+	ldr	r0, [r0]
+	ldr	r1, [ball, #4]
+	ldr	r1, [r1]	
+	pop	{r2, r3}
+
+	push	{r0, r1, r2, r3}
+	add	r0, #15
+	add	r1, #15
+	mov	r5, r0
+	mov	r0, r3
+	mov	r3, r5
+	mov	r5, r1
+	mov	r1, r2
+	mov	r2, r5
 	bl	update_tile_state
+	pop	{r0, r1, r2, r3}
+
+//	ballx = r0, bally = r1, col = r2, row = r3
+check_x:
+	mov	r4, #60
+	mul	r4, r2, r4
+	add	r4, #612
+	sub	r4, r1, r4		// r4 = ballx - brick left edge
+	cmp	r4, #0
+	ble	neg_x
+	cmpgt	r4, #45
+	bgt	neg_x
+	
+	ldr	r0, [ball, #12]
+	neg	r0, r0
+	str	r0, [ball, #12]
+	b	end_hit_brick
+	
+neg_x:
+	ldr	r0, [ball, #8]
+	neg	r0, r0
+	str	r0, [ball, #8]
+
+end_hit_brick:	
 
 	
 	mov	r0, #1
