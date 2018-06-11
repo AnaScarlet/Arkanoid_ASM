@@ -2,56 +2,56 @@
 .section .text
 
 tiles_minX = 612
-tile0_minY = 247 
-tile1_minY = 287
-tile2_minY = 327
-tile3_minY = 367
-tile4_minY = 407
-tile5_minY = 447
+tile0_maxY = 247 
+tile1_maxY = 287
+tile2_maxY = 327
+tile3_maxY = 367
+tile4_maxY = 407
+tile5_maxY = 447
 
-
+/*
 main:
 	push {lr}
 
-	mov r0, #2		// y
-	mov r1, #2		// x
-	ldr r2, =#327
-	ldr r3, =#765
+	mov r0, #5		// y
+	mov r1, #3		// x
+	ldr r2, =#207
+	ldr r3, =#820
 	bl update_tile_state
 
 	ldr r0, =print_tile
-	mov r1, #2
-	ldr r2, =tile_row2
+	mov r1, #5
+	ldr r2, =tile_row5
 	ldr r2, [r2]		// the actual hex value of the tile row state variable 
 	bl printf
 
-	mov r0, #3
-	mov r1, #1
-	ldr r2, =#367
-	ldr r3, =#705
-	bl update_tile_state
-
-	ldr r0, =print_tile
+	mov r0, #5
 	mov r1, #3
-	ldr r2, =tile_row3
-	ldr r2, [r2]		// the actual hex value of the tile row state variable 
-	bl printf
-
-	mov r0, #2
-	mov r1, #2
-	ldr r2, =#327
-	ldr r3, =#765
+	ldr r2, =#467
+	ldr r3, =#820
 	bl update_tile_state
 
 	ldr r0, =print_tile
-	mov r1, #2
-	ldr r2, =tile_row2
+	mov r1, #5
+	ldr r2, =tile_row5
+	ldr r2, [r2]		// the actual hex value of the tile row state variable 
+	bl printf
+
+	mov r0, #5
+	mov r1, #3
+	ldr r2, =#437
+	ldr r3, =#820
+	bl update_tile_state
+
+	ldr r0, =print_tile
+	mov r1, #5
+	ldr r2, =tile_row5
 	ldr r2, [r2]		// the actual hex value of the tile row state variable 
 	bl printf
 
 	pop {lr}
 	bx lr
-
+*/
 
 // Args:
 //	r0 - tile row number
@@ -61,7 +61,7 @@ main:
 // Returns:
 // 	Updates the state variables 
 update_tile_state:
-	push {r4, r5, r6, r7, r8, lr}
+	push {r4, r5, r6, r7, r8, r9, lr}
 	mov r4, #tiles_minX
 //	lsr r1, #1		// for using as the bit offset
 
@@ -90,12 +90,22 @@ tile0:
 	mul r0, r1
 	add r4, r0		// tile min x
 	add r6, r4, #60		// tile max x
-	mov r5, #tile0_minY	// tile y
-	cmp r5, r2		// if tile y  == ball y
-	bne fin
-	cmp r3, r6		// and if tile max x < ball x
+	mov r5, #tile0_maxY	// tile max y
+	sub r9, r5, #40		// tile min y
+// first y condition:
+	cmp r5, r2		// if tile max y >= ball min 
+	blt n0			// fail and check next condition
+	cmp r9, r2		// and if tile min y >= ball min y
+	ble n01			// pass condition if tile min y <= ball min y 
+	add r2, #30		// ball max y
+// second y condition:
+n0:	cmp r5, r2		// if tile max y =< ball max y
+	bgt fin			// quit if tile min y > ball max y
+	cmp r9, r2		// if tile min y >= ball max y
+	blt fin			// quit if tile min y < ball max y 
+n01:	cmp r3, r6		// and if tile max x =< ball x
 	bgt fin
-	cmp r3, r4		// and if tile min x > ball x
+	cmp r3, r4		// and if tile min x >= ball x
 	blt fin	
 	mov r0, #1		// then do a bit mask...
 	lsl r2, r1, #1		// r1*3 because tile_row0 has 30 bits affected instead of 10
@@ -120,10 +130,20 @@ tile1:
 	mul r0, r1
 	add r4, r0		// tile min x
 	add r6, r4, #60		// tile max x
-	ldr r5, =#tile1_minY	// tile y
-	cmp r5, r2		// if tile y  == ball y
-	bne fin
-	cmp r3, r6		// and if tile max x < ball x
+	ldr r5, =#tile1_maxY	// tile y
+	sub r9, r5, #40		// tile min y
+// first y condition:
+	cmp r5, r2		// if tile max y >= ball min 
+	blt n1			// fail and check next condition
+	cmp r9, r2		// and if tile min y >= ball min y
+	ble n11			// pass condition if tile min y <= ball min y 
+	add r2, #30		// ball max y
+// second y condition:
+n1:	cmp r5, r2		// if tile max y =< ball max y
+	bgt fin			// quit if tile min y > ball max y
+	cmp r9, r2		// if tile min y >= ball max y
+	blt fin			// quit if tile min y < ball max y 
+n11:	cmp r3, r6		// and if tile max x =< ball x
 	bgt fin
 	cmp r3, r4		// and if tile min x > ball x
 	blt fin	
@@ -146,10 +166,20 @@ tile2:
 	mul r0, r1
 	add r4, r0		// tile min x
 	add r6, r4, #60		// tile max x
-	ldr r5, =#tile2_minY	// tile y
-	cmp r5, r2		// if tile y  == ball y
-	bne fin
-	cmp r3, r6		// and if tile max x < ball x
+	ldr r5, =#tile2_maxY	// tile y
+	sub r9, r5, #40		// tile min y
+// first y condition:
+	cmp r5, r2		// if tile max y >= ball min 
+	blt n2			// fail and check next condition
+	cmp r9, r2		// and if tile min y >= ball min y
+	ble n21			// pass condition if tile min y <= ball min y 
+	add r2, #30		// ball max y
+// second y condition:
+n2:	cmp r5, r2		// if tile max y =< ball max y
+	bgt fin			// quit if tile min y > ball max y
+	cmp r9, r2		// if tile min y >= ball max y
+	blt fin			// quit if tile min y < ball max y 
+n21:	cmp r3, r6		// and if tile max x =< ball x
 	bgt fin
 	cmp r3, r4		// and if tile min x > ball x
 	blt fin	
@@ -172,10 +202,20 @@ tile3:
 	mul r0, r1
 	add r4, r0		// tile min x
 	add r6, r4, #60		// tile max x
-	ldr r5, =#tile3_minY	// tile y
-	cmp r5, r2		// if tile y  == ball y
-	bne fin
-	cmp r3, r6		// and if tile max x < ball x
+	ldr r5, =#tile3_maxY	// tile y
+	sub r9, r5, #40		// tile min y
+// first y condition:
+	cmp r5, r2		// if tile max y >= ball min 
+	blt n3			// fail and check next condition
+	cmp r9, r2		// and if tile min y >= ball min y
+	ble n31			// pass condition if tile min y <= ball min y 
+	add r2, #30		// ball max y
+// second y condition:
+n3:	cmp r5, r2		// if tile max y =< ball max y
+	bgt fin			// quit if tile min y > ball max y
+	cmp r9, r2		// if tile min y >= ball max y
+	blt fin			// quit if tile min y < ball max y 
+n31:	cmp r3, r6		// and if tile max x =< ball x
 	bgt fin
 	cmp r3, r4		// and if tile min x > ball x
 	blt fin	
@@ -195,10 +235,20 @@ tile4:
 	mul r0, r1
 	add r4, r0		// tile min x
 	add r6, r4, #60		// tile max x
-	ldr r5, =#tile4_minY	// tile y
-	cmp r5, r2		// if tile y  == ball y
-	bne fin
-	cmp r3, r6		// and if tile max x < ball x
+	ldr r5, =#tile4_maxY	// tile y
+	sub r9, r5, #40		// tile min y
+// first y condition:
+	cmp r5, r2		// if tile max y >= ball min 
+	blt n4			// fail and check next condition
+	cmp r9, r2		// and if tile min y >= ball min y
+	ble n41			// pass condition if tile min y <= ball min y 
+	add r2, #30		// ball max y
+// second y condition:
+n4:	cmp r5, r2		// if tile max y =< ball max y
+	bgt fin			// quit if tile min y > ball max y
+	cmp r9, r2		// if tile min y >= ball max y
+	blt fin			// quit if tile min y < ball max y 
+n41:	cmp r3, r6		// and if tile max x =< ball x
 	bgt fin
 	cmp r3, r4		// and if tile min x > ball x
 	blt fin	
@@ -218,10 +268,20 @@ tile5:
 	mul r0, r1
 	add r4, r0		// tile min x
 	add r6, r4, #60		// tile max x
-	ldr r5, =#tile5_minY	// tile y
-	cmp r5, r2		// if tile y  == ball y
-	bne fin
-	cmp r3, r6		// and if tile max x < ball x
+	ldr r5, =#tile5_maxY	// tile y
+	sub r9, r5, #40		// tile min y
+// first y condition:
+	cmp r5, r2		// if tile max y >= ball min 
+	blt n5			// fail and check next condition
+	cmp r9, r2		// and if tile min y >= ball min y
+	ble n51			// pass condition if tile min y <= ball min y 
+	add r2, #30		// ball max y
+// second y condition:
+n5:	cmp r5, r2		// if tile max y =< ball max y
+	bgt fin			// quit if tile min y > ball max y
+	cmp r9, r2		// if tile min y >= ball max y
+	blt fin			// quit if tile min y < ball max y 
+n51:	cmp r3, r6		// and if tile max x =< ball x
 	bgt fin
 	cmp r3, r4		// and if tile min x > ball x
 	blt fin	
@@ -234,7 +294,7 @@ tile5:
 	str r7, [r8]
 	b fin
 
-fin:	pop {r4, r5, r6, r7, r8, lr}
+fin:	pop {r4, r5, r6, r7, r8, r9, lr}
 	bx lr
 
 
