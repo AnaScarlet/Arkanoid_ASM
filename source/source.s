@@ -74,7 +74,20 @@ side_wall_loop:
 	movne r4, r0
 	movne r5, #127
 	bne side_wall_loop
+/*
+init_numbers:
+	mov r0, fp
+	mov r1, #0
+	ldr r2, =#702
+	mov r3, #48
+	bl draw_number
 
+	mov r0, fp
+	mov r1, #3
+	ldr r2, =#1172
+	mov r3, #48
+	bl draw_number
+*/
 next:
 	mov r0, fp
 	bl controller
@@ -109,11 +122,6 @@ floor_loop:
 
 	mov r4, #612
 	add r5, #img_hi
-	cmp r5, #207
-	ble floor_loop
-	ldr r0, =#487
-	cmp r5, r0
-	movlt r5, r0
 	cmp r5, #888
 	ble floor_loop
 
@@ -127,34 +135,36 @@ floor_loop:
 	mov r6, r0
 
 bricks_loop:
-		mov r0, #1
-		lsl r1, count, #1		// r1 = count * 3
-		add r2, r1, count
-		lsl r0, r2			// 1 at the tile's firt bit in row state
-		lsl r0, #2			// 1 at the tile's third bit in row state
-		and r1, row_state, r0		// row state (r7) AND bit mask (r0) = r1 (changes r1)
-		teq r1, r0			// if the tile's third bit was a 1
-		add count, #1			// increment counter
-		beq brick			// and go on to the next tile
+	mov r0, #1
+	lsl r1, count, #1		// r1 = count * 3
+	add r2, r1, count
+	lsl r0, r2			// 1 at the tile's firt bit in row state
+	lsl r0, #2			// 1 at the tile's third bit in row state
+	and r1, row_state, r0		// row state (r7) AND bit mask (r0) = r1 (changes r1)
+	teq r1, r0			// if the tile's third bit was a 1
+	add count, #1			// increment counter
+	beq brick			// and go on to the next tile
 					// otherwise... draw the tile
-floor:		ldr r0, =get_floor_tile
-		mov r1, r4
-		mov r2, r5
-		mov r3, fp
-		bl draw_img
-		add r4, #img_wid
-		cmp r4, #1152
-		ble bricks_loop	
-		bgt outer
+floor:
+	ldr r0, =get_floor_tile
+	mov r1, r4
+	mov r2, r5
+	mov r3, fp
+	bl draw_img
+	add r4, #img_wid
+	cmp r4, #1152
+	ble bricks_loop	
+	bgt outer
 
-brick:		mov r0, r6
-		mov r1, r4
-		mov r2, r5
-		mov r3, fp
-		bl draw_img
-		add r4, #img_wid
-		cmp r4, #1152
-		ble bricks_loop	
+brick:
+	mov r0, r6
+	mov r1, r4
+	mov r2, r5
+	mov r3, fp
+	bl draw_img
+	add r4, #img_wid
+	cmp r4, #1152
+	ble bricks_loop	
 
 outer:	add r5, #40
 	mov r4, #tiles_minX
@@ -514,6 +524,10 @@ y_motion:
 	ldr	r2, =#820
 	cmp	r0, r2
 	bge	check_paddle
+	cmp	r0, #247
+	ldr	r1, =#487
+	cmpge	r0, r1
+	ble	check_brick
 	mov	r0, #1
 	b	move_ball_end
 	
@@ -552,7 +566,69 @@ right_side_hit:
 	mov	r0, #1			// return #1
 	b	move_ball_end
 	
-check_bricks:
+check_brick:
+	ldr	r0, [ball, #4]
+	sub	r2, #247
+	asr	r1, r2, #5		// divide by 40
+	asr	r2, #3
+	sub	r2, r1				// 
+
+	ldr	r1, [ball]
+	sub	r3, #612
+	lsl	r4, r3, #2		// divide by 60
+	asr	r3, r3, #6
+	add	r3, r4
+//
+	push	{r2, r3}
+	b	hit_brick
+	
+//	ballx = r0, bally = r1, col = r2, row = r3
+/*
+check_x:
+	mul	r4, r2, #60
+	add	r4, 612
+	sub	r4, r1, r4		// r4 = ballx - brick left edge
+	cmp	r4, #-15
+	ble	check_x1
+	
+	
+check_x1:
+	sub	r2, #1
+	push	{r0, r1, r2, r3}
+	
+	
+	bl	check_brick_state
+	
+	sublt	r2, #1
+	blt	check_x
+	cmpge	r4, #45
+	
+
+check_y:
+	
+
+	push	{r0, r1}
+	bl	check_brick_state
+
+	cmp	r0, #1
+	beq	hit_brick
+
+	pop	{r0, r1}
+	mov	r0, #1
+	b	move_ball_end
+*/
+hit_brick:
+	ldr	r3, [ball]
+	ldr	r3, [r3]
+	ldr	r2, [ball, #4]
+	ldr	r2, [r2]	
+	pop	{r0, r1}
+
+	bl	update_tile_state
+
+	
+	mov	r0, #1
+	b	move_ball_end
 	
 lose_life:
 	ldr	r0, =lives
@@ -593,6 +669,44 @@ move_ball_end:
 	pop	{r6, r7, fp, lr}
 	bx	lr
 
+////////////////////////////////////////////////////////////////////////////
+//	args:	r0 = row num
+//		r1 = column num
+//	return:	r0 = 1 if tile exists, 0 is tile does not
+/////////////////////////////////////////////////////////////////////////	
+check_brick_state:
+	row	.req	r0
+	column	.req	r1
+	row_state .req	r2
+	
+	cmp 	row, #0		// tile row 0
+	ldr	row, =tile0
+	cmp 	row, #1
+	ldr	row, =tile1
+	cmp	row, #2
+	ldr	row, =tile2
+	cmp 	row, #3
+	ldr	row, =tile3
+	cmp 	row, #4
+	ldr	row, =tile4
+	cmp 	row, #5
+	ldr	row, =tile5
+
+	ldr	row_state, [row]
+	
+	
+	mov	r0, #1			// r0 = 
+	lsl 	r3, column, #1		// r2 = count * 3
+	add 	r3, r3, r0		
+	lsl 	r0, r3			// 1 at the tile's first bit in row state
+	lsl	r0, #2			// 1 at the tile's third bit in row state
+	and 	r3, row_state, r1	// row state (r7) AND bit mask (r1) = r2 (changes r2)
+	teq 	r3, r1			// if the tile's third bit was a 1
+	moveq	r0, #1
+	movne	r0, #0
+	
+	bx	 lr
+	
 /////////////////////////////////////////////////////////////////////////////
 draw_ball:
 	push	{fp, lr}
