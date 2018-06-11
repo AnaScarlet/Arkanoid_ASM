@@ -574,7 +574,7 @@ right_side_hit:
 	
 check_brick:
 	ldr	r0, [ball, #4]
-	ldr	r2, =#247
+	ldr	r2, =#245
 	sub	r2, r0, r2
 	asr	r2, #5			// divide by 32
 	sub	r2, #1
@@ -585,7 +585,7 @@ check_brick:
 	sub	r3, r1, r3	
 	asr	r3, #6			// divide by 64
 
-	push	{r0, r1}
+	push	{r2, r3}
 	mov	r0, r2
 	mov	r1, r3
 	bl	check_brick_state
@@ -593,26 +593,17 @@ check_brick:
 	cmp	r0, #0
 	beq	hit_brick
 
-	pop	{r0, r1}
+	pop	{r2, r3}
 	mov	r0, #1
 	b	move_ball_end
 
 	
 hit_brick:
-	ldr	r0, [ball]
-	ldr	r1, [ball, #4]
-	pop	{r2, r3}
-
+	ldr	r3, [ball]
+	ldr	r2, [ball, #4]
+	pop	{r0, r1}
 
 	push	{r0, r1, r2, r3}
-//	add	r0, #15
-//	add	r1, #15
-	mov	r5, r0
-	mov	r0, r3
-	mov	r3, r5
-	mov	r5, r1
-	mov	r1, r2
-	mov	r2, r5
 	bl	update_tile_state
 	pop	{r0, r1, r2, r3}
 
@@ -638,8 +629,6 @@ neg_x:
 	str	r0, [ball, #12]
 
 end_hit_brick:	
-
-	
 	mov	r0, #1
 	b	move_ball_end
 	
@@ -853,6 +842,8 @@ halt:	b	halt
 
 print:
 	.string	"%d\n"
+printn:
+	.string	"%d	%d\n"
 here:
 	.string	"Here\n"
 frameBufferInfo:
