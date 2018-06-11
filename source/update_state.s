@@ -1,4 +1,4 @@
-.global main
+//.global main
 .section .text
 
 tiles_minX = 612
@@ -60,6 +60,7 @@ main:
 //	r3 - ball x coordinate
 // Returns:
 // 	Updates the state variables 
+.global update_tile_state
 update_tile_state:
 	push {r4, r5, r6, r7, r8, r9, lr}
 	mov r4, #tiles_minX
@@ -300,7 +301,12 @@ fin:	pop {r4, r5, r6, r7, r8, r9, lr}
 
 
 .section .data
-
+.global tile_row0
+.global tile_row1
+.global tile_row2
+.global tile_row3
+.global tile_row4
+.global tile_row5
 tile_row0:	.word	0b100100100100100100100100100100		// hardness level 3
 tile_row1:	.word	0x24924924					// hardness level 2
 tile_row2:	.word	0x24924924
@@ -311,4 +317,3 @@ tile_row5:	.word	0x24924924
 print_tile: .string "Tile row %d: %#08x \n"
 
 .end
-
