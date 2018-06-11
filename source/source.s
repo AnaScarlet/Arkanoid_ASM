@@ -122,6 +122,11 @@ floor_loop:
 
 	mov r4, #612
 	add r5, #img_hi
+	cmp r5, #207
+	ble floor_loop
+	ldr r0, =#487
+	cmp r5, r0
+	movlt r5, r0
 	cmp r5, #888
 	ble floor_loop
 
