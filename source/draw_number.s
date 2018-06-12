@@ -306,6 +306,107 @@ draw_number:
 	addeq r4, #19
 	bleq draw_0
 
+	teq r1, #71
+	bleq draw_7
+	addeq r4, #19
+	bleq draw_1
+
+	teq r1, #72
+	bleq draw_7
+	addeq r4, #19
+	bleq draw_2
+
+	teq r1, #73
+	bleq draw_7
+	addeq r4, #19
+	bleq draw_3
+
+	teq r1, #74
+	bleq draw_7
+	addeq r4, #19
+	bleq draw_4
+
+	teq r1, #75
+	bleq draw_7
+	addeq r4, #19
+	bleq draw_5
+
+	teq r1, #76
+	bleq draw_7
+	addeq r4, #19
+	bleq draw_6
+
+	teq r1, #77
+	bleq draw_7
+	addeq r4, #19
+	bleq draw_7
+
+	teq r1, #78
+	bleq draw_7
+	addeq r4, #19
+	bleq draw_8
+
+	teq r1, #79
+	bleq draw_7
+	addeq r4, #19
+	bleq draw_9
+
+	teq r1, #80
+	bleq draw_8
+	addeq r4, #19
+	bleq draw_0
+
+	teq r1, #81
+	bleq draw_8
+	addeq r4, #19
+	bleq draw_1
+
+	teq r1, #82
+	bleq draw_8
+	addeq r4, #19
+	bleq draw_2
+
+	teq r1, #83
+	bleq draw_8
+	addeq r4, #19
+	bleq draw_3
+
+	teq r1, #84
+	bleq draw_8
+	addeq r4, #19
+	bleq draw_4
+
+	teq r1, #85
+	bleq draw_8
+	addeq r4, #19
+	bleq draw_5
+
+	teq r1, #86
+	bleq draw_8
+	addeq r4, #19
+	bleq draw_6
+
+	teq r1, #87
+	bleq draw_8
+	addeq r4, #19
+	bleq draw_7
+
+	teq r1, #88
+	bleq draw_8
+	addeq r4, #19
+	bleq draw_8
+
+	teq r1, #89
+	bleq draw_8
+	addeq r4, #19
+	bleq draw_9
+
+	teq r1, #90
+	bleq draw_9
+	addeq r4, #19
+	bleq draw_0
+
+
 	pop {r4, r5, fp, lr}
 	bx lr
 
