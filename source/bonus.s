@@ -1,16 +1,14 @@
-/*
-NOTE: need to put the following lines of code when any of these subroutines are	called:
+
+//NOTE: need to put the following lines of code when any of these subroutines are	called:
 
 //Check for a Quit condition
-	ldr	r0, =Quit
-	ldr	r0, [r0]
-	cmp	r0, #0
-	beq	draw_loop
-
+.global StopsBrick
+StopsBrick:
+	ldr	r1, [r0, #12]
+	mov	r1, #-1
+	str	r1, [r0, #12]
+	bx	lr
 //stop
-haltLoop$:
-	b	haltLoop$
-*/
 	
 //Code section for drawing the bonus bricks as they "fall"
 .section .text
@@ -102,9 +100,12 @@ print_moving_brick6:
 	bl	UpdateVertLoc		//Update Vertical Location of 6th bonus brick
 	
 	ldr	r0, =movingBrick6	//load x, y, and friction of 6th bonus brick
-	ldr	r1, [r0, #0]		//load x into r1
-	ldr	r2, [r0, #4]		//load y into r2
-	bl	print_bonus		//Draw 6th Updated bonus brick
+	ldr	r1, [r0, #4]
+	ldr	r2, =#850
+	cmp	r1, r2
+	ldrlt	r1, [r0, #0]		//load x into r1
+	ldrlt	r2, [r0, #4]		//load y into r2
+	bllt	print_bonus		//Draw 6th Updated bonus brick
 	pop	{lr}
 	bx	lr
 
@@ -120,7 +121,9 @@ UpdateVertLoc:
 //Update vertical coordinates by one pixel
 	ldr	r2, [ObjAddr, #4]
 	add	r2, #1
-	str	r2, [ObjAddr, #4]
+	ldr	r3, =#850
+	cmp	r2, r3
+	strlt	r2, [ObjAddr, #4]
 
 //Get width-1
 	ldr	r0, =frameBufferInfo
@@ -128,11 +131,11 @@ UpdateVertLoc:
 	sub	r3, #1
 	
 //set Quit flag if drawing outside the screen
-	ldr	r0, =Quit
+
 	cmp	r2, #880		//compare r2 with screen width (880)
 	movge	r2, #1
 	strge	r2, [r0]		
-	pop	{r4, pc}
+	pop	{r4, lr}
 	bx	lr
 
 //draws the bonus brick	
@@ -145,7 +148,7 @@ print_bonus:
 	str 	r0, [fp, #16]		//address of image as 1st argument
 	mov	r5, r1			//r5 = r1
 	mov	r4, r2			//r4 = r2
-	bl	get_yellow_brick		//get the pic of bonus brick
+	bl	get_bonus_brick		//get the pic of bonus brick
 	mov	r1, r5			//x as 2nd argument
 	mov	r2, r4			//y as 3rd argument
 	mov	r3, fp			//fp as 4th argument
@@ -153,34 +156,57 @@ print_bonus:
 	pop	{r4, lr}
 	bx	lr
 
+.global printBricks
+printBricks:
+	push	{lr}
+	ldr	r0, =movingBrick6
+	ldr	r1, [r0, #12]
+	cmp	r1, #1
+	bleq	print_moving_brick6
+
+//print_brick2:
+//	ldr	r0, =movingBrick2
+//	ldr	r1, [r0, #12]
+	pop	{lr}
+	bx	lr
+
+
 //Data section	
 .section .data
 .align
 
+print:	.string	"%d\n"
+.global movingBrick1
 movingBrick1:
 	.int	1092, 287	//x and y of 1st bonus brick
 	.int	10		//friction
+	.int	0
 
+.global movingBrick2	
 movingBrick2:
 	.int	1032, 327	//x and y of 2nd bonus brick
 	.int	10		//friction
+	.int	0
 
+.global movingBrick3
 movingBrick3:
 	.int	792, 367	//x and y of 3rd bonus brick
 	.int	10		//friction
-
+	.int	0
+.global movingBrick4
 movingBrick4:
 	.int	912, 407	//x and y of 4th bonus brick
 	.int	10		//friction
-
+	.int	0
+.global movingBrick5
 movingBrick5:
 	.int	672, 447	//x and y of 5th bonus brick
 	.int	10		//friction
-
+	.int	0
+.global movingBrick6
 movingBrick6:
 	.int	1032, 447	//x and y of 6th bonus brick
 	.int	10		//friction
+	.int	0
 
-.global Quit	
-Quit:
-	.int	0		//Quit flag
+

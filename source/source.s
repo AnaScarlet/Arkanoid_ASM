@@ -217,6 +217,8 @@ o_end:	mov r6, r0
 	movle count, #0
 	ble bricks_loop
 
+	bl printBricks
+
 	mov r0, #680
 	str r0, [fp, #12]
 	mov r0, #img_hi
@@ -464,6 +466,7 @@ draw_cont:
 	mov 	r3, fp
 	bl 	draw_img
 
+
 // draw numbers
 	mov r0, fp
 	ldr r1, =score
@@ -516,6 +519,15 @@ hard_reset:
 	ldr	r0, =tile_row5
 	str	r1, [r0]
 	
+	ldr	r0, =movingBrick6
+	ldr	r1, =#1032
+	str	r1, [r0]
+	ldr	r1, =#447
+	str	r1, [r0, #4]
+	mov	r1, #0
+	str	r1, [r0, #12]
+	
+
 soft_reset:
 	ldr	r0, =paddle_location		// reset paddle location
 	mov	r1, #850
@@ -783,7 +795,9 @@ check_brick_state:
 	row	.req	r0
 	column	.req	r1
 	row_s	.req	r2
-	
+	push	{r4, lr}	
+	mov	r4, r0			//ADDED
+
 	cmp 	row, #0			// tile row 0
 	ldreq	row_s, =tile_row0
 	ldreq	row_s, [row_s]
@@ -805,16 +819,71 @@ check_brick_state:
 
 	mov	r3, #3
 	mul	r3, column, r3		// r3 = column * 3
-
 	mov	r0, #1			// r0 = 
 	lsl 	r0, r3			// 1 at the tile's first bit in row state
 	lsl	r0, #2			// 1 at the tile's third bit in row state
 
 	and 	r3, row_s, r0		// row state (row_s) AND bit mask (r0) = r3 (changes r3)
+
+// SACTIVATE brick 6
+sactivate:
+	push	{r0, r1, r2, r3, r4, r5}
+	cmp	r4, #5
+	bne	catch6
+	cmp	r1, #7
+	bne	catch6
+	teq 	r3, r0				
+	bne	catch6
+	ldr	r0, =movingBrick6
+	ldr	r1, [r0, #12]
+	cmp	r1, #1
+	beq	catch6
+	cmp	r1, #0
+	mov	r1, #1
+	str	r1, [r0, #12]
+catch6:
+	ldr	r0, =movingBrick6
+	ldr	r1, [r0, #12]
+	cmp	r1, #-1
+	beq	next6
+	ldr	r1, [r0, #4]
+	ldr	r2, =#810
+	cmp	r1, r2
+	blt	next6
+	ldr	r1, [r0]
+	ldr	r2, =paddle_location
+	ldr	r2, [r2]
+	add	r1, #60
+	cmp	r1, r2
+	blt	next6
+	sub	r1, #60
+	add	r2, #120
+	cmp	r1, r2
+	bgt	next6
+
+	push	{r0, r1, r2, r3}
+	ldr	r0, =print
+	ldr	r1, =movingBrick6
+	ldr	r1, [r1, #12]
+	bl	printf
+	pop	{r0, r1, r2, r3}
+
+	ldr	r0, =score
+	ldr	r1, [r0]
+	add	r1, #5
+	str	r1, [r0]
+//end6:
+	ldr	r0, =movingBrick6
+	bl	StopsBrick
+
+next6:
+	pop	{r0, r1, r2, r3, r4, r5}
+
+	and 	r3, row_s, r0
 	teq 	r3, r0			// if the tile's third bit was a 1
 	moveq	r0, #1
 	movne	r0, #0
-	
+	pop	{r4, lr}		
 	bx	 lr
 	
 /////////////////////////////////////////////////////////////////////////////
