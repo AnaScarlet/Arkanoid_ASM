@@ -157,6 +157,13 @@ floor:
 	mov r2, r5
 	mov r3, fp
 	bl draw_img
+
+//	ldr	r0, =score
+//	ldr	r1, [r0]
+//	add	r1, #1
+//	str	r1, [r0]
+//	bl	check_win
+
 	add r4, #img_wid
 	cmp r4, #1152
 	ble bricks_loop	
@@ -694,10 +701,10 @@ neg_x:
 	str	r0, [ball, #12]
 
 end_hit_brick:	
-	ldr	r0, =score
-	ldr	r1, [r0]
-	add	r1, #1
-	str	r1, [r0]
+//	ldr	r0, =score
+//	ldr	r1, [r0]
+//	add	r1, #1
+//	str	r1, [r0]
 
 	b	check_win
 	
@@ -827,7 +834,7 @@ draw_ball:
 	
 	pop	{fp, lr}
 	bx	lr
-	
+
 
 width .req r4
 height .req r5
@@ -1036,7 +1043,7 @@ ball_location:
 menu_flag:	.word	0
 menu_option:	.word	0
 
-score:		.word	0
+//score:		.word	0
 lives:		.word	3
 
 Lose_Flag:	.word	0

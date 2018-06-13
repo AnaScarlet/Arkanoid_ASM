@@ -120,6 +120,9 @@ n01:	cmp r3, r6		// and if tile max x =< ball x
 	and r2, r7, r0		// resets r2
 	teq r2, r0		// if the tile has been hit twice
 	lsleq r0, #1		// shift r0 to clear the next bit (that the tile does not exist) 
+	pusheq {r0}
+	bleq increment_score
+	popeq {r0}
 skip:	bic r7, r0		// clear the bit
 	orrne r7, r0		// otherwise, set the bit to 1 (that the tile has been hit)
 	str r7, [r8]
@@ -157,6 +160,9 @@ n11:	cmp r3, r6		// and if tile max x =< ball x
 	and r2, r7, r0
 	teq r2, r0		// if the tile has already been hit (1st bit from the right is 1)
 	lsleq r0, #2		// shift r0 to clear the exists bit (that the tile does not exist) 
+	pusheq {r0}
+	bleq increment_score
+	popeq {r0}
 	bic r7, r0		// clear the bit
 	orrne r7, r0		// otherwise, set the bit to 1 (that the tile has been hit)
 	str r7, [r8]
@@ -194,6 +200,9 @@ n21:	cmp r3, r6		// and if tile max x =< ball x
 	and r2, r7, r0
 	teq r2, r0		// if the tile has already been hit (1st bit from the right is 1)
 	lsleq r0, #2		// shift r0 to clear the exists bit (that the tile does not exist) 
+	pusheq {r0}
+	bleq increment_score
+	popeq {r0}
 	bic r7, r0		// clear the bit
 	orrne r7, r0		// otherwise, set the bit to 1 (that the tile has been hit)
 	str r7, [r8]
@@ -229,6 +238,9 @@ n31:	cmp r3, r6		// and if tile max x =< ball x
 	add r1, r2, r1		// r1*3 = r1*2 + r1 = r2 + r1
 	lsl r0, r1		// 1 at the tile's first number in the row...
 	lsl r0, #2		// shift r0 to clear the exists bit (that the tile does not exist)
+	push {r0}
+	bl increment_score
+	pop {r0}
 	bic r7, r0		// clear the bit
 	str r7, [r8]
 	b fin
@@ -263,6 +275,9 @@ n41:	cmp r3, r6		// and if tile max x =< ball x
 	add r1, r2, r1		// r1*3 = r1*2 + r1 = r2 + r1
 	lsl r0, r1		// 1 at the tile's first number in the row...
 	lsl r0, #2		// shift r0 to clear the exists bit (that the tile does not exist)
+	push {r0}
+	bl increment_score
+	pop {r0}
 	bic r7, r0		// clear the bit
 	str r7, [r8]
 	b fin
@@ -296,6 +311,9 @@ n51:	cmp r3, r6		// and if tile max x =< ball x
 	add r1, r2, r1		// r1*3 = r1*2 + r1 = r2 + r1
 	lsl r0, r1		// 1 at the tile's first number in the row...
 	lsl r0, #2		// shift r0 to clear the exists bit (that the tile does not exist)
+	push {r0}
+	bl increment_score
+	pop {r0}
 	bic r7, r0		// clear the bit
 	str r7, [r8]
 	b fin
@@ -303,6 +321,12 @@ n51:	cmp r3, r6		// and if tile max x =< ball x
 fin:	pop {r4, r5, r6, r7, r8, r9, lr}
 	bx lr
 
+increment_score:
+	ldr r0, =score
+	ldr r1, [r0]
+	add r1, #1
+	str	r1, [r0]
+	bx lr
 
 
 .section .data
@@ -312,6 +336,8 @@ fin:	pop {r4, r5, r6, r7, r8, r9, lr}
 .global tile_row3
 .global tile_row4
 .global tile_row5
+.global score
+
 tile_row0:	.word	0b100100100100100100100100100100		// hardness level 3
 tile_row1:	.word	0x24924924					// hardness level 2
 tile_row2:	.word	0x24924924
@@ -319,6 +345,8 @@ tile_row3:	.word	0x24924924					// hardness level 1
 tile_row4:	.word	0x24924924
 tile_row5:	.word	0x24924924
 
-print_tile: .string "Tile row %d: %#08x \n"
+//print_tile: .string "Tile row %d: %#08x \n"
+
+score:		.word	0
 
 .end
