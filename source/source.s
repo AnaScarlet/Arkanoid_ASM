@@ -106,11 +106,14 @@ draw_grid:
 
 
 floor_loop:
-	bl get_floor_tile
 	mov r1, r4
 	mov r2, r5
 	mov r3, fp			// pass the address of stack variables
-	bl draw_img
+	ldr r0, =#847
+	cmp r5, r0
+	bl get_floor_tile
+	bleq draw_paddle_floor
+	blne draw_img
 	add r4, #img_wid
 	cmp r4, #1152
 	ble floor_loop
@@ -878,6 +881,73 @@ loop:
 	pop {width, height, fb_ptr, fb_offset, i_r, j_r, lr}
 	bx lr
 
+
+draw_paddle_floor: 
+	push {width, height, fb_ptr, fb_offset, i_r, addr, j_r, lr}
+
+	mov addr, r0
+	ldr fb_ptr, [r3]
+	ldr width, [r3, #4]
+	ldr height, [r3, #8]
+	ldr img_wid, [r3, #12]
+	ldr img_hi, [r3, #16] 
+
+// element fb_offset = (y * width) + x
+	mul fb_offset, r2, width
+	add fb_offset, r1
+
+// physical fb_offset *= 4 (each pixel is 4 bytes in size)
+	lsl fb_offset, #2
+
+// calculate the width to shift the offet by to go to the next line
+	lsl width, #2
+	mov j_r, #0
+	mov i_r, #0
+
+loop1:
+	add r2, r1, i_r			// r2 = tile min x + i = current x
+	add r3, r1, img_wid		// r3 = tile max x
+	ldr r0, =paddle_location
+	ldr r0, [r0]			// paddle min x
+
+	cmp r1, r0			// is tile min > paddle min? (on right side of paddle)
+	bgt right_of	
+	cmp r2, r0			// if current x < paddle min x
+	blt nxt				// draw the pixel
+	cmp i_r, img_wid
+	bge skip
+	b skip_px			// and skip drawing the pixel
+
+right_of:
+	add r0, #120			// get paddle max x
+	cmp r2, r0			// if curren x > paddle max x
+	bge nxt				// draw the pixel
+	cmple i_r, img_wid		// otherwise, check that you're not at the end of the row
+	blt skip_px			// and skip drawing pixel
+	b skip				// if at the end of the row, go to the next row
+
+nxt:	cmp i_r, img_wid		// if i_r >= image width,
+	bge skip			// go to outer loop
+					// otherwise, draw the pixel and loop back
+	ldr r3, [addr]			// get the hex colour value of the current pixel
+	str r3, [fb_ptr, fb_offset]	// store it in the frame buffer (draw the pixel)
+skip_px:
+	add i_r, #1	
+	add fb_offset, #4		// increment fb horizontally (by 4 bytes ie 1 px) 
+	add addr, #4			// increment address to load from to the next image pixel in img
+	b loop1
+				
+skip:	add fb_offset, width
+	sub fb_offset, i_r, lsl #2	// change frame buffer offset to point to the beginning of the next row
+	mov i_r, #0			// reset i
+	add j_r, #1			// increment vertically
+	cmp j_r, img_hi			// if vertical height drawn < image height
+	blt loop1			// loop back
+
+	pop {width, height, fb_ptr, fb_offset, i_r, addr, j_r, lr}
+	bx lr
+
+
 // Agrs:
 //	r0 = address of image
 //	r1 = x coordinate
@@ -908,20 +978,20 @@ draw_img:
 	mov j_r, #0
 	mov i_r, #0
 
-loop1:
+loop2:
 	ldr r0, [addr]
 	str r0, [fb_ptr, fb_offset]
 	add i_r, #1	
 	add fb_offset, #4		// increment fb horizontally (by 4 bytes ie 1 px) 
 	add addr, #4			// increment address to load from to the next image pixel in img
 	cmp i_r, img_wid			// if i_r < image width,
-	blt loop1			// loop inner loop
+	blt loop2			// loop inner loop
 				// otherwise, go into outer loop
 	add fb_offset, width
 	mov i_r, #0
 	add j_r, #1			// increment vertically
 	cmp j_r, img_hi
-	blt loop1
+	blt loop2
 
 	pop {width, height, fb_ptr, fb_offset, i_r, addr, j_r, lr}
 	bx lr
@@ -937,7 +1007,7 @@ halt:	b	halt
 .section .data
 
 .align 2
-//.globl frameBufferInfo
+.global frameBufferInfo
 
 print:
 	.string	"%d\n"
@@ -947,6 +1017,7 @@ printx:
 	.string	"state: %#08x\n"
 here:
 	.string	"Here\n"
+
 frameBufferInfo:
 	.word	0		@ frame buffer pointer
 	.word	0		@ screen width
