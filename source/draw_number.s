@@ -306,6 +306,56 @@ draw_number:
 	addeq r4, #19
 	bleq draw_0
 
+	teq r1, #61
+	bleq draw_6
+	addeq r4, #19
+	bleq draw_1
+
+	teq r1, #62
+	bleq draw_6
+	addeq r4, #19
+	bleq draw_2
+
+	teq r1, #63
+	bleq draw_6
+	addeq r4, #19
+	bleq draw_3
+
+	teq r1, #64
+	bleq draw_6
+	addeq r4, #19
+	bleq draw_4
+
+	teq r1, #65
+	bleq draw_6
+	addeq r4, #19
+	bleq draw_5
+
+	teq r1, #66
+	bleq draw_6
+	addeq r4, #19
+	bleq draw_6
+
+	teq r1, #67
+	bleq draw_6
+	addeq r4, #19
+	bleq draw_7
+
+	teq r1, #68
+	bleq draw_6
+	addeq r4, #19
+	bleq draw_8
+
+	teq r1, #69
+	bleq draw_6
+	addeq r4, #19
+	bleq draw_9
+
+	teq r1, #70
+	bleq draw_7
+	addeq r4, #19
+	bleq draw_0
+
 	teq r1, #71
 	bleq draw_7
 	addeq r4, #19

@@ -145,7 +145,7 @@ print_bonus:
 	str 	r0, [fp, #16]		//address of image as 1st argument
 	mov	r5, r1			//r5 = r1
 	mov	r4, r2			//r4 = r2
-	bl	get_bonus_brick		//get the pic of bonus brick
+	bl	get_yellow_brick		//get the pic of bonus brick
 	mov	r1, r5			//x as 2nd argument
 	mov	r2, r4			//y as 3rd argument
 	mov	r3, fp			//fp as 4th argument
