@@ -514,7 +514,7 @@ hard_reset:
 	str	r1, [r0]			// set lives to 3
 
 	ldr	r0, =tile_row0
-	ldr	r1, =0x24924924
+	ldr	r1, =#0x24924924
 	str	r1, [r0]			// reset bottom row bricks
 	ldr	r0, =tile_row1
 	str	r1, [r0]			// reset 2nd row bricks
@@ -533,7 +533,7 @@ hard_reset:
 	ldr	r1, =#287
 	str	r1, [r0, #4]			// reset movingBrick1 y
 	mov	r1, #0
-	str	r1, [r0, #12]			// reset movingBrick1 activation bit
+	str	r1, [r0, #8]			// reset movingBrick1 activation bit
 */
 
 	ldr	r0, =movingBrick2
@@ -542,7 +542,7 @@ hard_reset:
 	ldr	r1, =#367
 	str	r1, [r0, #4]			// reset movingBrick2 y
 	mov	r1, #0
-	str	r1, [r0, #12]			// reset movingBrick2 activation bit
+	str	r1, [r0, #8]			// reset movingBrick2 activation bit
 	
 	ldr	r0, =movingBrick3
 	ldr	r1, =#1032
@@ -550,7 +550,7 @@ hard_reset:
 	ldr	r1, =#447
 	str	r1, [r0, #4]			// reset movingBrick3 y
 	mov	r1, #0
-	str	r1, [r0, #12]			// reset movingBrick3 activation bit
+	str	r1, [r0, #8]			// reset movingBrick3 activation bit
 	
 
 soft_reset:
@@ -850,16 +850,16 @@ sactivate3:
 	teq 	r7, r6				
 	bne	sactivate2
 	ldr	r0, =movingBrick3
-	ldr	r1, [r0, #12]
+	ldr	r1, [r0, #8]
 	cmp	r1, #1
 	beq	catch3
 	cmp	r1, #0
 	mov	r1, #1
-	str	r1, [r0, #12]
+	str	r1, [r0, #8]
 
 catch3:
 	ldr	r0, =movingBrick3
-	ldr	r1, [r0, #12]
+	ldr	r1, [r0, #8]
 	cmp	r1, #-1
 	beq	sactivate2
 	ldr	r1, [r0, #4]
@@ -877,13 +877,6 @@ catch3:
 	cmp	r1, r2
 	bgt	sactivate2
 
-	push	{r0, r1, r2, r3}
-	ldr	r0, =print
-	ldr	r1, =movingBrick3
-	ldr	r1, [r1, #12]
-	bl	printf
-	pop	{r0, r1, r2, r3}
-
 	ldr	r0, =score
 	ldr	r1, [r0]
 	add	r1, #5
@@ -891,27 +884,25 @@ catch3:
 
 	ldr	r0, =movingBrick3
 	bl	StopsBrick
-//next3:
 
-/*
+// SACTIVATE brick 2
 sactivate2:
-//	push	{r0, r1, r2, r3, r4, r5}
 	cmp	r4, #3
 	bne	catch2
 	cmp	r5, #3
 	bne	catch2
 	teq 	r7, r6				
-	bne	sactivate1
+	bne	catch2
 	ldr	r0, =movingBrick2
-	ldr	r1, [r0, #12]
+	ldr	r1, [r0, #8]
 	cmp	r1, #1
 	beq	catch2
 	cmp	r1, #0
 	mov	r1, #1
-	str	r1, [r0, #12]
+	str	r1, [r0, #8]
 catch2:
 	ldr	r0, =movingBrick2
-	ldr	r1, [r0, #12]
+	ldr	r1, [r0, #8]
 	cmp	r1, #-1
 	beq	sactivate1
 	ldr	r1, [r0, #4]
@@ -929,13 +920,6 @@ catch2:
 	cmp	r1, r2
 	bgt	sactivate1
 
-//	push	{r0, r1, r2, r3}
-//	ldr	r0, =print
-//	ldr	r1, =movingBrick2
-//	ldr	r1, [r1, #12]
-//	bl	printf
-//	pop	{r0, r1, r2, r3}
-
 	ldr	r0, =score
 	ldr	r1, [r0]
 	add	r1, #5
@@ -944,27 +928,23 @@ catch2:
 	ldr	r0, =movingBrick2
 	bl	StopsBrick
 
-//next2: // sactivate1?
-//	pop	{r0, r1, r2, r3, r4, r5, r6, r7}
-	
 sactivate1:
-//	push	{r0, r1, r2, r3, r4, r5}
-	cmp	r4, #1
+/*	cmp	r4, #1
 	bne	catch1
 	cmp	r5, #8
 	bne	catch1
 	teq 	r7, r6				
 	bne	catch1
 	ldr	r0, =movingBrick1
-	ldr	r1, [r0, #12]
+	ldr	r1, [r0, #8]
 	cmp	r1, #1
 	beq	catch1
 	cmp	r1, #0
 	mov	r1, #1
-	str	r1, [r0, #12]
+	str	r1, [r0, #8]
 catch1:
 	ldr	r0, =movingBrick1
-	ldr	r1, [r0, #12]
+	ldr	r1, [r0, #8]
 	cmp	r1, #-1
 	beq	next1
 	ldr	r1, [r0, #4]
@@ -982,13 +962,6 @@ catch1:
 	cmp	r1, r2
 	bgt	next1
 
-//	push	{r0, r1, r2, r3}
-//	ldr	r0, =print
-//	ldr	r1, =movingBrick1
-//	ldr	r1, [r1, #12]
-//	bl	printf
-//	pop	{r0, r1, r2, r3}
-
 	ldr	r0, =score
 	ldr	r1, [r0]
 	add	r1, #5
@@ -997,70 +970,8 @@ catch1:
 	ldr	r0, =movingBrick1
 	bl	StopsBrick
 
-next1: // sactivate1?
-	pop	{r0, r1, r2, r3, r4, r5, r6, r7}
-
-	and 	r3, row_s, r0
-	teq 	r3, r0			// if the tile's third bit was a 1
-	moveq	r0, #1
-	movne	r0, #0
-	pop	{r4, lr}		
-	bx	 lr
-*/
-
-// SACTIVATE brick 2
-sactivate2:
-//	push	{r0, r1, r2, r3, r4, r5}
-	cmp	r4, #3
-	bne	catch2
-	cmp	r5, #3
-	bne	catch2
-	teq 	r7, r6				
-	bne	catch2
-	ldr	r0, =movingBrick2
-	ldr	r1, [r0, #12]
-	cmp	r1, #1
-	beq	catch2
-	cmp	r1, #0
-	mov	r1, #1
-	str	r1, [r0, #12]
-catch2:
-	ldr	r0, =movingBrick2
-	ldr	r1, [r0, #12]
-	cmp	r1, #-1
-	beq	next2
-	ldr	r1, [r0, #4]
-	ldr	r2, =#810
-	cmp	r1, r2
-	blt	next2
-	ldr	r1, [r0]
-	ldr	r2, =paddle_location
-	ldr	r2, [r2]
-	add	r1, #60
-	cmp	r1, r2
-	blt	next2
-	sub	r1, #60
-	add	r2, #120
-	cmp	r1, r2
-	bgt	next2
-
-	push	{r0, r1, r2, r3}
-	ldr	r0, =print
-	ldr	r1, =movingBrick2
-	ldr	r1, [r1, #12]
-	bl	printf
-	pop	{r0, r1, r2, r3}
-
-	ldr	r0, =score
-	ldr	r1, [r0]
-	add	r1, #5
-	str	r1, [r0]
-
-	ldr	r0, =movingBrick2
-	bl	StopsBrick
-
-next2: // sactivate1?
-	pop	{r0, r1, r2, r3, r4, r5}
+next1: 
+*/	pop	{r0, r1, r2, r3, r4, r5, r6, r7}
 
 	and 	r3, row_s, r0
 	teq 	r3, r0			// if the tile's third bit was a 1
