@@ -1,3 +1,5 @@
+@ By Anastasiya, John, and Ummey
+
 .global main
 .global draw_img
 .balign 4
@@ -37,54 +39,56 @@ main:
 	str r2, [fp, #4]		// screen width
 	str r3, [fp, #8]		// screen height
 
-////////////////////// initial screen ////////////////////////////////////////////
+////////////////////// initial screen //////////////////////////////////////////////////////////////////
 	mov r1, #0			// x coordinate of image's top left corner
 	mov r2, #35			// y coordinate of image's top left corner
 	mov r3, fp
-	bl draw_black
+	bl draw_black			// draws the whole screen black
 
-	mov r4, #572
-	mov r5, #87
-	mov r0, #img_hi
-	str r0, [fp, #12]
-	mov r0, #img_hi
-	str r0, [fp, #16]
+	mov r4, #572			// image x coordinate
+	mov r5, #87			// image y coordinate
+	mov r0, #img_hi			// image width
+	str r0, [fp, #12]		// stored as a stack variable
+	mov r0, #img_hi			// image height
+	str r0, [fp, #16]		// stored as a stack variable
 
+// draws the top row of wall tiles
 top_wall_loop:
-	bl get_d_brick_t
-	mov r1, r4
-	mov r2, r5
-	mov r3, fp
+	bl get_d_brick_t	// returns the hex value associated with the current image pixel in r0
+	mov r1, r4		// image x coordinate (changes)
+	mov r2, r5		// image y coordinate (changes)
+	mov r3, fp		// pointer to stack variables
 	bl draw_img
-	add r4, #img_hi
-	ldr r0, =#1212
-	cmp r4, r0
-	ble top_wall_loop
-
-	mov r4, #572
-	mov r5, #127
+	add r4, #img_hi		// increment the x coordinate by the image width
+	ldr r0, =#1212		
+	cmp r4, r0		// while the current image's x coordinate is less than 1212 (end of the 'grid' - image width)
+	ble top_wall_loop	// keep drawing tiles horizontally
+				// otherwise, go on to drawing the side walls
+	mov r4, #572		// x coordinate at the beginning of the grid
+	mov r5, #127		// y coordinate 
 	// image dimentions stay the same
 
+// draws the left side wall, then the right side wall (similr to the top wall)
 side_wall_loop:
 	bl get_d_brick_l
 	mov r1, r4
 	mov r2, r5
 	mov r3, fp
 	bl draw_img
-	add r5, #img_hi
-	cmp r5, #888
-	ble side_wall_loop
-
+	add r5, #img_hi		// increment the y coordinate by the image height
+	cmp r5, #888		// while y coordinate < 888 (vertical end of the grid - image height)
+	ble side_wall_loop	// keep looping (drawing tiles down a line)
+				// when done,
 	ldr r0, =#1212
-	cmp r4, r0
+	cmp r4, r0		// if the x coordinate has not yet been set as 1212
 	beq next
-	movne r4, r0
+	movne r4, r0		// set it
 	movne r5, #127
-	bne side_wall_loop
+	bne side_wall_loop	// and go back to the loop to draw the right wall
 
-next:
+next:				// otherwise, go here (exit)
 	mov r0, fp
-	bl controller
+	bl controller		// the controller will draw the rest as needed
 
 	add sp, #20
 	pop {fp, lr}
@@ -97,48 +101,48 @@ draw_grid:
 	push {r4, r5, r6, fp, lr}
 	mov fp, r0			// same as main's fp
 
-	mov r4, #612
-	mov r5, #127
-	mov r0, #img_wid
-	str r0, [fp, #12]
-	mov r0, #img_hi
-	str r0, [fp, #16]
+	mov r4, #612			// x coordinate (left side of floor)
+	mov r5, #127			// y coordinate (top of floor)
+	mov r0, #img_wid		// floor tile width
+	str r0, [fp, #12]		// stored as a stack variable
+	mov r0, #img_hi			// floor tile height
+	str r0, [fp, #16]		// stored as a stack variable
 
-
+// draws all the floor tiles
 floor_loop:
-	mov r1, r4
-	mov r2, r5
+	mov r1, r4			// x
+	mov r2, r5			// y
 	mov r3, fp			// pass the address of stack variables
-	ldr r0, =#847
-	cmp r5, r0
-	bl get_floor_tile
-	bleq draw_paddle_floor
-	blne draw_img
-	add r4, #img_wid
-	cmp r4, #1152
-	ble floor_loop
-
-	mov r4, #612
-	add r5, #img_hi
-	cmp r5, #207
-	ble floor_loop
-	ldr r0, =#487
-	cmp r5, r0
-	movlt r5, r0
-	cmp r5, #888
-	ble floor_loop
-
-	mov r4, #tiles_minX
+	ldr r0, =#847			// check if currently at the 19th row
+	cmp r5, r0			// where the paddle is drawn
+	bl get_floor_tile		
+	bleq draw_paddle_floor		// if so, call the special paddle floor subroutine
+	blne draw_img			// otherwise, draw the floor tiles normally with draw_img
+	add r4, #img_wid		// increment x by wimage width
+	cmp r4, #1152			// if the next image's x coordinate is less than the end of the floor,
+	ble floor_loop			// keep looping
+					// otherwise,
+	mov r4, #612			// reset the x coordinate
+	add r5, #img_hi			// increment the y coordinate
+	cmp r5, #207			// if the y was not 207 (where brick tiles begin),
+	ble floor_loop			// keep looping
+	ldr r0, =#487			// if y = 207,	 
+	cmp r5, r0			// and if y was less than 487,
+	movlt r5, r0			// set y = 487 (the end of brick tiles)
+	cmp r5, #888			// while y < 888 (end of floor)
+	ble floor_loop			// keep looping
+					// otherwise, go on to draw the bricks
+	mov r4, #tiles_minX		// usual arguments for draw_img
 	mov r5, #tile0_minY
 	mov r0, #img_wid
 	str r0, [fp, #12]
 	mov r0, #img_hi
 	str r0, [fp, #16]
-	bl get_gray_brick
+	bl get_gray_brick		// first row of bricks is gray
 	ldr r7, =tile_row0		// get the row's state
 	ldr row_state, [r7]
-	mov r6, r0
-	mov count, #0
+	mov r6, r0			// save the pointer to the stack variables to r6
+	mov count, #0			// initialize the counter (for column of brick)
 
 bricks_loop:
 	mov r0, #1
@@ -147,88 +151,83 @@ bricks_loop:
 	lsl r0, r2			// 1 at the tile's firt bit in row state
 	lsl r0, #2			// 1 at the tile's third bit in row state
 	and r1, row_state, r0		// row state (r7) AND bit mask (r0) = r1 (changes r1)
-	teq r1, r0			// if the tile's third bit was a 1
+	teq r1, r0			// if the tile's third bit was a 1 (brick exists here)
 	add count, #1			// increment counter
-	beq brick			// and go on to the next tile
-					// otherwise... draw the tile
+	beq brick			// and draw a brick tile
+					// otherwise... draw a floor tile tile
 floor:
 	ldr r0, =get_floor_tile
 	mov r1, r4
 	mov r2, r5
 	mov r3, fp
-	bl draw_img
+	bl draw_img			// draw a regular floor tile
 
-//	ldr	r0, =score
-//	ldr	r1, [r0]
-//	add	r1, #1
-//	str	r1, [r0]
-//	bl	check_win
-
-	add r4, #img_wid
-	cmp r4, #1152
-	ble bricks_loop	
-	bgt outer
+	add r4, #img_wid		// increment x by the image width
+	cmp r4, #1152			// while x < 1152 (end of floor - image width)
+	ble bricks_loop			// keep drawing the current row
+	bgt outer			// otherwise, go to the outer loop
 
 brick:
-	mov r0, r6
+	mov r0, r6			// loads the address of the current kind of brick tile
 	mov r1, r4
 	mov r2, r5
 	mov r3, fp
-	bl draw_img
-	add r4, #img_wid
-	cmp r4, #1152
-	ble bricks_loop	
+	bl draw_img			// draw the current kind of brick tile
 
-outer:	add r5, #40
-	mov r4, #tiles_minX
-	ldr r1, =#tile1_minY
-	cmp r5, r1
-	bleq get_red_brick
+	add r4, #img_wid		// increment x by the image width
+	cmp r4, #1152			// while x < 1152 (end of floor - image width)
+	ble bricks_loop			// keep drawing the current row
+			// otherwise, go to the outer loop
+outer:	add r5, #img_hi			// increment y by the image height
+	mov r4, #tiles_minX		// initialize the tiles min x to r4
+	ldr r1, =#tile1_minY		// y of the 2nd row of tiles
+	cmp r5, r1			// if this was the row,
+	bleq get_red_brick		// get the brick image
 	ldreq r7, =tile_row1		// get the row's state
-	ldreq row_state, [r7]
-	beq o_end
-	ldr r1, =#tile2_minY
+	ldreq row_state, [r7]		// put the state into r7
+	beq o_end			// go to the end of the case/if block
+	ldr r1, =#tile2_minY		// 3rd row of bricks
 	cmp r5, r1
-	bleq get_purple_brick
+	bleq get_purple_brick		// get the 3rd row brick image
 	ldreq r7, =tile_row2		// get the row's state
-	ldreq row_state, [r7]
+	ldreq row_state, [r7]		// put the state into r7
 	beq o_end
-	ldr r1, =#tile3_minY
+	ldr r1, =#tile3_minY		// 4th row of bricks
 	cmp r5, r1
-	bleq get_blue_brick
+	bleq get_blue_brick		// brick image
 	ldreq r7, =tile_row3		// get the row's state
-	ldreq row_state, [r7]
+	ldreq row_state, [r7]		// put the state into r7
 	beq o_end
-	ldr r1, =#tile4_minY
+	ldr r1, =#tile4_minY		// 5th row of bricks
 	cmp r5, r1
-	bleq get_yellow_brick
+	bleq get_yellow_brick		// brick image
 	ldreq r7, =tile_row4		// get the row's state
-	ldreq row_state, [r7]
+	ldreq row_state, [r7]		// put the state into r7
 	beq o_end
-	ldr r1, =#tile5_minY
+	ldr r1, =#tile5_minY		// 6th row of bricks
 	cmp r5, r1
-	bleq get_green_brick
+	bleq get_green_brick		// brick image
 	ldreq r7, =tile_row5		// get the row's state
-	ldreq row_state, [r7]
+	ldreq row_state, [r7]		// put the state into r7
 
 o_end:	mov r6, r0
-	ldr r1, =#tile5_minY
+	ldr r1, =#tile5_minY		// if this was not the last row of tiles,
 	cmp r5, r1
-	movle count, #0
-	ble bricks_loop
-
+	movle count, #0			// reset the column count
+	ble bricks_loop			// and keep looping 
+					// otherwise, fo on to draw special bricks if needed
 	bl printBricks
 
-	mov r0, #680
+	mov r0, #680			// score/lives board width
 	str r0, [fp, #12]
-	mov r0, #img_hi
+	mov r0, #img_hi			// score/lives board height (40)
 	str r0, [fp, #16]
 
-	bl get_score_lives_text
-	mov r1, #572
-	mov r2, #35
-	mov r3, fp
-	bl draw_img
+	bl get_score_lives_text		// get the image
+	mov r1, #572			// x coordinate
+	mov r2, #35			// y coordinate
+	mov r3, fp			// pointer to stack variables
+	bl draw_img			// draw the score/lives board
 
 	pop {r4, r5, r6, fp, lr}
 	bx lr
@@ -1115,7 +1114,7 @@ s_hi: .string "%d\n"
 //	r1 = width (x)
 //	r2 = height (y)
 //	r3 = pointer to stack arguments
-
+// Same stack arguments as draw_img
 draw_black: 
 	push {width, height, fb_ptr, fb_offset, i_r, j_r, lr}
 
@@ -1134,11 +1133,11 @@ draw_black:
 	mov i_r, #0
 
 loop:
-	mov r0, #0xFF000000
+	mov r0, #0xFF000000		// the colour is black
 	str r0, [fb_ptr, fb_offset]
 	add i_r, #1	
 	add fb_offset, #4		// increment fb horizontally (by 4 bytes ie 1 px) 
-	cmp i_r, #1824		// if i_r < 16*4 (image length in bytes),
+	cmp i_r, #1824			// if i_r < 16*4 (image length in bytes),
 	blt loop
 
 	mov i_r, #0
@@ -1150,6 +1149,8 @@ loop:
 	bx lr
 
 
+// Same arguments as draw_img
+// Draws floor tiles under the moving paddle (so that it doesn't blink)
 draw_paddle_floor: 
 	push {width, height, fb_ptr, fb_offset, i_r, addr, j_r, lr}
 
@@ -1221,6 +1222,14 @@ skip:	add fb_offset, width
 //	r1 = x coordinate
 //	r2 = y coordinate
 //	r3 = pointer to stack arguments
+//
+// Stack arguments:
+//	1. frame buffer pointer
+//	2. screen width
+//	3. screen height
+//	4. image width
+//	5. image height
+// Note: all stack arguments are 4 bytes long
 
 draw_img: 
 	push {width, height, fb_ptr, fb_offset, i_r, addr, j_r, lr}
@@ -1252,17 +1261,18 @@ loop2:
 	add i_r, #1	
 	add fb_offset, #4		// increment fb horizontally (by 4 bytes ie 1 px) 
 	add addr, #4			// increment address to load from to the next image pixel in img
-	cmp i_r, img_wid			// if i_r < image width,
+	cmp i_r, img_wid		// if i_r < image width,
 	blt loop2			// loop inner loop
-				// otherwise, go into outer loop
+					// otherwise, go into outer loop
 	add fb_offset, width
-	mov i_r, #0
+	mov i_r, #0			// reset i
 	add j_r, #1			// increment vertically
-	cmp j_r, img_hi
-	blt loop2
+	cmp j_r, img_hi			// while j < image height
+	blt loop2			// loop
 
 	pop {width, height, fb_ptr, fb_offset, i_r, addr, j_r, lr}
 	bx lr
+
 
 end_loop:
 	mov r1, #0			// x coordinate of image's top left corner
