@@ -111,10 +111,10 @@ print_bonus:
 .global printBricks
 printBricks:
 	push	{lr}
-	ldr	r0, =movingBrick1	//load x, y, and activation of the 1st bonus brick
-	ldr	r1, [r0, #8]		//load activation
-	cmp	r1, #1			//compare activation to 1
-	bleq	print_moving_brick1	//if equal, branch and link to print_moving_brick1
+//	ldr	r0, =movingBrick1	//load x, y, and activation of the 1st bonus brick
+//	ldr	r1, [r0, #8]		//load activation
+//	cmp	r1, #1			//compare activation to 1
+//	bleq	print_moving_brick1	//if equal, branch and link to print_moving_brick1
 
 	ldr	r0, =movingBrick2	//load x, y, and activation of the 2nd bonus brick
 	ldr	r1, [r0, #8]		//load activation
@@ -133,24 +133,20 @@ printBricks:
 //Data section	
 .section .data
 .align
-
-//print:	.string	"%d\n"
-/*.global movingBrick1
+/*
+.global movingBrick1
 movingBrick1:
 	.int	1092, 287	
-//	.int	14		
 	.int	0		
 */
 .global movingBrick2
 movingBrick2:
 	.int	792, 367	//x and y of the 2nd bonus brick
-//	.int	14		//friction
 	.int	0		//activatation for when brick2 is hit
 
 .global movingBrick3
 movingBrick3:
 	.int	1032, 447	//x and y of the 3rd bonus brick
-//	.int	14		//friction
 	.int	0		//activatation for when brick3 is hit
 
 
