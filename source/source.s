@@ -518,8 +518,16 @@ hard_reset:
 	str	r1, [r0]
 	ldr	r0, =tile_row5
 	str	r1, [r0]
+
+	ldr	r0, =movingBrick2
+	ldr	r1, =#792
+	str	r1, [r0]
+	ldr	r1, =#367
+	str	r1, [r0, #4]
+	mov	r1, #0
+	str	r1, [r0, #12]
 	
-	ldr	r0, =movingBrick6
+	ldr	r0, =movingBrick3
 	ldr	r1, =#1032
 	str	r1, [r0]
 	ldr	r1, =#447
@@ -825,45 +833,47 @@ check_brick_state:
 
 	and 	r3, row_s, r0		// row state (row_s) AND bit mask (r0) = r3 (changes r3)
 
-// SACTIVATE brick 6
-sactivate:
+
+// SACTIVATE brick 3
+sactivate3:
 	push	{r0, r1, r2, r3, r4, r5}
 	cmp	r4, #5
-	bne	catch6
+	bne	catch3
 	cmp	r1, #7
-	bne	catch6
+	bne	catch3
 	teq 	r3, r0				
-	bne	catch6
-	ldr	r0, =movingBrick6
+	bne	sactivate2
+	ldr	r0, =movingBrick3
 	ldr	r1, [r0, #12]
 	cmp	r1, #1
-	beq	catch6
+	beq	catch3
 	cmp	r1, #0
 	mov	r1, #1
 	str	r1, [r0, #12]
-catch6:
-	ldr	r0, =movingBrick6
+
+catch3:
+	ldr	r0, =movingBrick3
 	ldr	r1, [r0, #12]
 	cmp	r1, #-1
-	beq	next6
+	beq	next3
 	ldr	r1, [r0, #4]
 	ldr	r2, =#810
 	cmp	r1, r2
-	blt	next6
+	blt	next3
 	ldr	r1, [r0]
 	ldr	r2, =paddle_location
 	ldr	r2, [r2]
 	add	r1, #60
 	cmp	r1, r2
-	blt	next6
+	blt	next3
 	sub	r1, #60
 	add	r2, #120
 	cmp	r1, r2
-	bgt	next6
+	bgt	next3
 
 	push	{r0, r1, r2, r3}
 	ldr	r0, =print
-	ldr	r1, =movingBrick6
+	ldr	r1, =movingBrick3
 	ldr	r1, [r1, #12]
 	bl	printf
 	pop	{r0, r1, r2, r3}
@@ -872,11 +882,72 @@ catch6:
 	ldr	r1, [r0]
 	add	r1, #5
 	str	r1, [r0]
-//end6:
-	ldr	r0, =movingBrick6
+
+	ldr	r0, =movingBrick3
+	bl	StopsBrick
+next3:
+	pop	{r0, r1, r2, r3, r4, r5}
+
+	and 	r3, row_s, r0
+	teq 	r3, r0			// if the tile's third bit was a 1
+	moveq	r0, #1
+	movne	r0, #0
+
+	pop	{r4, lr}		
+	bx	 lr
+
+// SACTIVATE brick 2
+sactivate2:
+//	push	{r0, r1, r2, r3, r4, r5}
+	cmp	r4, #3
+	bne	catch2
+	cmp	r1, #3
+	bne	catch2
+	teq 	r3, r0				
+	bne	catch2
+	ldr	r0, =movingBrick2
+	ldr	r1, [r0, #12]
+	cmp	r1, #1
+	beq	catch2
+	cmp	r1, #0
+	mov	r1, #1
+	str	r1, [r0, #12]
+catch2:
+	ldr	r0, =movingBrick2
+	ldr	r1, [r0, #12]
+	cmp	r1, #-1
+	beq	next2
+	ldr	r1, [r0, #4]
+	ldr	r2, =#810
+	cmp	r1, r2
+	blt	next2
+	ldr	r1, [r0]
+	ldr	r2, =paddle_location
+	ldr	r2, [r2]
+	add	r1, #60
+	cmp	r1, r2
+	blt	next2
+	sub	r1, #60
+	add	r2, #120
+	cmp	r1, r2
+	bgt	next3
+
+	push	{r0, r1, r2, r3}
+	ldr	r0, =print
+	ldr	r1, =movingBrick2
+	ldr	r1, [r1, #12]
+	bl	printf
+	pop	{r0, r1, r2, r3}
+
+	ldr	r0, =score
+	ldr	r1, [r0]
+	add	r1, #5
+	str	r1, [r0]
+
+	ldr	r0, =movingBrick2
 	bl	StopsBrick
 
-next6:
+next2:
 	pop	{r0, r1, r2, r3, r4, r5}
 
 	and 	r3, row_s, r0
@@ -885,6 +956,7 @@ next6:
 	movne	r0, #0
 	pop	{r4, lr}		
 	bx	 lr
+
 	
 /////////////////////////////////////////////////////////////////////////////
 draw_ball:
@@ -1091,8 +1163,6 @@ printn:
 	.string	"%d	%d\n"
 printx:
 	.string	"state: %#08x\n"
-here:
-	.string	"Here\n"
 
 frameBufferInfo:
 	.word	0		@ frame buffer pointer

@@ -1,6 +1,3 @@
-
-//NOTE: need to put the following lines of code when any of these subroutines are	called:
-
 //Check for a Quit condition
 .global StopsBrick
 StopsBrick:
@@ -8,7 +5,6 @@ StopsBrick:
 	mov	r1, #-1
 	str	r1, [r0, #12]
 	bx	lr
-//stop
 	
 //Code section for drawing the bonus bricks as they "fall"
 .section .text
@@ -23,83 +19,44 @@ print_moving_brick1:
 	ldr	r2, [r0, #4]		//load y into r2
 	bl	UpdateVertLoc		//Update Vertical Location of 1st bonus brick
 	
-	ldr	r0, =movingBrick1	//load x, y, and friction of 1st bonus brick
-	ldr	r1, [r0, #0]		//load x into r1
-	ldr	r2, [r0, #4]		//load y into r2
-	bl	print_bonus		//draw 1st Updated bonus brick
-	
+	ldr	r0, =movingBrick1	//load x, y, and friction of 6th bonus brick
+	ldr	r1, [r0, #4]
+	ldr	r2, =#850
+	cmp	r1, r2
+	ldrlt	r1, [r0, #0]		//load x into r1
+	ldrlt	r2, [r0, #4]		//load y into r2
+	bllt	print_bonus		//Draw 6th Updated bonus brick
 	pop	{lr}
 	bx	lr
 
-//drawing the 2nd bonus brick		
+//drawing the 2nd bonus brick
 .global print_moving_brick2
 print_moving_brick2:	
 	push	{lr}
-	ldr	r0, =movingBrick2	//load x, y, and friction of 2nd bonus brick
-	ldr	r2, [r0, #4]		//load y into r2
-	bl	UpdateVertLoc		//Update Vertical Location of 2nd bonus brick
-
-	ldr	r0, =movingBrick2	//load x, y, and frictio of 2nd bonus brickn
-	ldr	r1, [r0, #0]		//load x into r1
-	ldr	r2, [r0, #4]		//load y into r2
-	bl	print_bonus		//Draw 2nd Updated bonus brick
-	pop	{lr}
-	bx	lr
-
-//drawing the 3rd bonus brick
-.global print_moving_brick3
-print_moving_brick3:	
-	push	{lr}
-	ldr	r0, =movingBrick3	//load x, y, and friction of 3rd bonus brick
+	ldr	r0, =movingBrick2	//load x, y, and friction of 3rd bonus brick
 	ldr	r2, [r0, #4]		//load y into r2
 	bl	UpdateVertLoc		//Update Vertical Location of 3rd bonus brick
 
-	ldr	r0, =movingBrick3	//load x, y, and friction of 3rd bonus brick
-	ldr	r1, [r0, #0]		//load x into r1
-	ldr	r2, [r0, #4]		//load y into r2
-	bl	print_bonus		//Draw 3rd Updated bonus brick
+	ldr	r0, =movingBrick2	//load x, y, and friction of 6th bonus brick
+	ldr	r1, [r0, #4]
+	ldr	r2, =#850
+	cmp	r1, r2
+	ldrlt	r1, [r0, #0]		//load x into r1
+	ldrlt	r2, [r0, #4]		//load y into r2
+	bllt	print_bonus		//Draw 6th Updated bonus brick
 	pop	{lr}
 	bx	lr
 
-//drawing the 4th bonus brick		
-.global print_moving_brick4
-print_moving_brick4:	
+
+//drawing the 3rd bonus brick		
+.global print_moving_brick3
+print_moving_brick3:	
 	push	{lr}
-	ldr	r0, =movingBrick4	//load x, y, and friction of 4th bonus brick
-	ldr	r2, [r0, #4]		//load y into r2
-	bl	UpdateVertLoc		//Update Vertical Location of 4th bonus brick
-
-	ldr	r0, =movingBrick4	//load x, y, and friction of 4th bonus brick
-	ldr	r1, [r0, #0]		//load x into r1
-	ldr	r2, [r0, #4]		//load y into r2
-	bl	print_bonus		//Draw 4th Updated bonus brick
-	pop	{lr}
-	bx	lr
-
-//drawing the 5th bonus brick		
-.global print_moving_brick5
-print_moving_brick5:	
-	push	{lr}
-	ldr	r0, =movingBrick5	//load x, y, and friction of 5th bonus brick
-	ldr	r2, [r0, #4]		//load y into r2
-	bl	UpdateVertLoc		//Update Vertical Location of 5th bonus brick
-
-	ldr	r0, =movingBrick5	//load x, y, and friction of 5th bonus brick
-	ldr	r1, [r0, #0]		//load x into r1
-	ldr	r2, [r0, #4]		//load y into r2
-	bl	print_bonus		//Draw 5th Updated bonus brick
-	pop	{lr}
-	bx	lr
-
-//drawing the 6th bonus brick		
-.global print_moving_brick6
-print_moving_brick6:	
-	push	{lr}
-	ldr	r0, =movingBrick6	//load x, y, and friction of 6th bonus brick
+	ldr	r0, =movingBrick3	//load x, y, and friction of 6th bonus brick
 	ldr	r2, [r0, #4]		//load y into r2
 	bl	UpdateVertLoc		//Update Vertical Location of 6th bonus brick
 	
-	ldr	r0, =movingBrick6	//load x, y, and friction of 6th bonus brick
+	ldr	r0, =movingBrick3	//load x, y, and friction of 6th bonus brick
 	ldr	r1, [r0, #4]
 	ldr	r2, =#850
 	cmp	r1, r2
@@ -159,14 +116,16 @@ print_bonus:
 .global printBricks
 printBricks:
 	push	{lr}
-	ldr	r0, =movingBrick6
+	ldr	r0, =movingBrick2
 	ldr	r1, [r0, #12]
 	cmp	r1, #1
-	bleq	print_moving_brick6
+	bleq	print_moving_brick2
 
-//print_brick2:
-//	ldr	r0, =movingBrick2
-//	ldr	r1, [r0, #12]
+	ldr	r0, =movingBrick3
+	ldr	r1, [r0, #12]
+	cmp	r1, #1
+	bleq	print_moving_brick3
+
 	pop	{lr}
 	bx	lr
 
@@ -182,29 +141,14 @@ movingBrick1:
 	.int	10		//friction
 	.int	0
 
-.global movingBrick2	
+.global movingBrick2
 movingBrick2:
-	.int	1032, 327	//x and y of 2nd bonus brick
+	.int	792, 367	//x and y of 3rd bonus brick
 	.int	10		//friction
 	.int	0
 
 .global movingBrick3
 movingBrick3:
-	.int	792, 367	//x and y of 3rd bonus brick
-	.int	10		//friction
-	.int	0
-.global movingBrick4
-movingBrick4:
-	.int	912, 407	//x and y of 4th bonus brick
-	.int	10		//friction
-	.int	0
-.global movingBrick5
-movingBrick5:
-	.int	672, 447	//x and y of 5th bonus brick
-	.int	10		//friction
-	.int	0
-.global movingBrick6
-movingBrick6:
 	.int	1032, 447	//x and y of 6th bonus brick
 	.int	10		//friction
 	.int	0
