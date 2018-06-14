@@ -836,12 +836,17 @@ check_brick_state:
 
 // SACTIVATE brick 3
 sactivate3:
-	push	{r0, r1, r2, r3, r4, r5}
+	push	{r0, r1, r2, r3, r4, r5, r6, r7}
+
+	mov 	r5, r1
+	mov	r6, r0
+	mov 	r7, r3
+
 	cmp	r4, #5
 	bne	catch3
-	cmp	r1, #7
+	cmp	r5, #7
 	bne	catch3
-	teq 	r3, r0				
+	teq 	r7, r6				
 	bne	sactivate2
 	ldr	r0, =movingBrick3
 	ldr	r1, [r0, #12]
@@ -855,21 +860,21 @@ catch3:
 	ldr	r0, =movingBrick3
 	ldr	r1, [r0, #12]
 	cmp	r1, #-1
-	beq	next3
+	beq	sactivate2
 	ldr	r1, [r0, #4]
 	ldr	r2, =#810
 	cmp	r1, r2
-	blt	next3
+	blt	sactivate2
 	ldr	r1, [r0]
 	ldr	r2, =paddle_location
 	ldr	r2, [r2]
 	add	r1, #60
 	cmp	r1, r2
-	blt	next3
+	blt	sactivate2
 	sub	r1, #60
 	add	r2, #120
 	cmp	r1, r2
-	bgt	next3
+	bgt	sactivate2
 
 	push	{r0, r1, r2, r3}
 	ldr	r0, =print
@@ -885,25 +890,16 @@ catch3:
 
 	ldr	r0, =movingBrick3
 	bl	StopsBrick
-next3:
-	pop	{r0, r1, r2, r3, r4, r5}
-
-	and 	r3, row_s, r0
-	teq 	r3, r0			// if the tile's third bit was a 1
-	moveq	r0, #1
-	movne	r0, #0
-
-	pop	{r4, lr}		
-	bx	 lr
+//next3:
 
 // SACTIVATE brick 2
 sactivate2:
 //	push	{r0, r1, r2, r3, r4, r5}
 	cmp	r4, #3
 	bne	catch2
-	cmp	r1, #3
+	cmp	r5, #3
 	bne	catch2
-	teq 	r3, r0				
+	teq 	r7, r6				
 	bne	catch2
 	ldr	r0, =movingBrick2
 	ldr	r1, [r0, #12]
@@ -930,7 +926,7 @@ catch2:
 	sub	r1, #60
 	add	r2, #120
 	cmp	r1, r2
-	bgt	next3
+	bgt	next2
 
 	push	{r0, r1, r2, r3}
 	ldr	r0, =print
@@ -947,7 +943,7 @@ catch2:
 	ldr	r0, =movingBrick2
 	bl	StopsBrick
 
-next2:
+next2: // sactivate1?
 	pop	{r0, r1, r2, r3, r4, r5}
 
 	and 	r3, row_s, r0
