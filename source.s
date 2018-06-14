@@ -519,21 +519,30 @@ hard_reset:
 	ldr	r0, =tile_row5
 	str	r1, [r0]
 
-	ldr	r0, =movingBrick2		//load x, y, friction, and activation of 2nd bonus brick
-	ldr	r1, =#792			//load 792 (x) into r1
-	str	r1, [r0]			//store it into r1
-	ldr	r1, =#367			//load 367 (y) into 1
-	str	r1, [r0, #4]			//store y into r1
-	mov	r1, #0				//move 0 into r1
-	str	r1, [r0, #12]			//store activation into r1
+/*	ldr	r0, =movingBrick1
+	ldr	r1, =#1092
+	str	r1, [r0]
+	ldr	r1, =#287
+	str	r1, [r0, #4]
+	mov	r1, #0
+	str	r1, [r0, #12]
+*/
+
+	ldr	r0, =movingBrick2
+	ldr	r1, =#792
+	str	r1, [r0]
+	ldr	r1, =#367
+	str	r1, [r0, #4]
+	mov	r1, #0
+	str	r1, [r0, #12]
 	
-	ldr	r0, =movingBrick3		//load x, y, friction, and activation of 3rd bonus brick
-	ldr	r1, =#1032			//load 1032 (x) into r1
-	str	r1, [r0]			//store it into r1
-	ldr	r1, =#447			//load 367 (y) into 1
-	str	r1, [r0, #4]			//store y into r1
-	mov	r1, #0				//move 0 into r1
-	str	r1, [r0, #12]			//store activation into r1
+	ldr	r0, =movingBrick3
+	ldr	r1, =#1032
+	str	r1, [r0]
+	ldr	r1, =#447
+	str	r1, [r0, #4]
+	mov	r1, #0
+	str	r1, [r0, #12]
 	
 
 soft_reset:
@@ -804,7 +813,7 @@ check_brick_state:
 	column	.req	r1
 	row_s	.req	r2
 	push	{r4, lr}	
-	mov	r4, r0			//move r0 into r4 to avoid being overwitten
+	mov	r4, r0			//ADDED
 
 	cmp 	row, #0			// tile row 0
 	ldreq	row_s, =tile_row0
@@ -834,68 +843,187 @@ check_brick_state:
 	and 	r3, row_s, r0		// row state (row_s) AND bit mask (r0) = r3 (changes r3)
 
 
-//this subroutines checks if brick 3 is activated (aka been hit)
+// SACTIVATE brick 3
 sactivate3:
-	push	{r0, r1, r2, r3, r4, r5}
-	cmp	r4, #5			//compare row # to 5
-	bne	catch3			//if row # is not equal to 5, branch to catch3
-	cmp	r1, #7			//compare colume # to 7
-	bne	catch3			//if colume # is not equal to 7, branch to catch3
-	teq 	r3, r0			//check if brick has been hit
-	ldr	r0, =movingBrick3	//load x, y, friction, and activation of 3rd bonus brick
-	ldr	r1, [r0, #12]		//load activation
-	cmp	r1, #1			//compare activation to 1
-	beq	catch3			//if they equal, branch to catch3
-	cmp	r1, #0			//compare activation to 0
-	mov	r1, #1			//move 1 into r1
-	str	r1, [r0, #12]		//store activation into r1
+	push	{r0, r1, r2, r3, r4, r5, r6, r7}
+
+	mov 	r5, r1
+	mov	r6, r0
+	mov 	r7, r3
+
+	cmp	r4, #5
+	bne	catch3
+	cmp	r5, #7
+	bne	catch3
+	teq 	r7, r6				
+	bne	sactivate2
+	ldr	r0, =movingBrick3
+	ldr	r1, [r0, #12]
+	cmp	r1, #1
+	beq	catch3
+	cmp	r1, #0
+	mov	r1, #1
+	str	r1, [r0, #12]
 
 catch3:
-	ldr	r0, =movingBrick3	//load x, y, friction, and activation of 3rd bonus brick
-	ldr	r1, [r0, #12]		//load activation
-	cmp	r1, #-1			//compare activation to -1
-	beq	next3			//if they equal, go to next3
-	ldr	r1, [r0, #4]		//load y into r1
-	ldr	r2, =#810		//load 810 into r2
-	cmp	r1, r2			//compare y and 810
-	blt	next3			//if y < 810, branch to next3
-	ldr	r1, [r0]		//load r0 into y
-	ldr	r2, =paddle_location	//load paddle's location
-	ldr	r2, [r2]		
-	add	r1, #60			//add 60 to y
-	cmp	r1, r2			//compare paddle's location to y
-	blt	next3			//if paddle's location < y, branch to next3
-	sub	r1, #60			//subtract 60 from y
-	add	r2, #120		//add 120 to the paddle's location
-	cmp	r1, r2			//compare paddle's location to y
-	bgt	next3			//if paddle's location > y, branch to next3
+	ldr	r0, =movingBrick3
+	ldr	r1, [r0, #12]
+	cmp	r1, #-1
+	beq	sactivate2
+	ldr	r1, [r0, #4]
+	ldr	r2, =#810
+	cmp	r1, r2
+	blt	sactivate2
+	ldr	r1, [r0]
+	ldr	r2, =paddle_location
+	ldr	r2, [r2]
+	add	r1, #60
+	cmp	r1, r2
+	blt	sactivate2
+	sub	r1, #60
+	add	r2, #120
+	cmp	r1, r2
+	bgt	sactivate2
 
-	ldr	r0, =score		//load score
-	ldr	r1, [r0]		//load it into r1
-	add	r1, #5			//add 5 to it if paddle catches bonus brick
-	str	r1, [r0]		//store into r1
+	push	{r0, r1, r2, r3}
+	ldr	r0, =print
+	ldr	r1, =movingBrick3
+	ldr	r1, [r1, #12]
+	bl	printf
+	pop	{r0, r1, r2, r3}
 
-	ldr	r0, =movingBrick3	//load x, y, friction, and activation of 3rd bonus brick
-	bl	StopsBrick		//branch and link to StopsBrick
-next3:
-	pop	{r0, r1, r2, r3, r4, r5}
+	ldr	r0, =score
+	ldr	r1, [r0]
+	add	r1, #5
+	str	r1, [r0]
+
+	ldr	r0, =movingBrick3
+	bl	StopsBrick
+//next3:
+
+/*
+sactivate2:
+//	push	{r0, r1, r2, r3, r4, r5}
+	cmp	r4, #3
+	bne	catch2
+	cmp	r5, #3
+	bne	catch2
+	teq 	r7, r6				
+	bne	sactivate1
+	ldr	r0, =movingBrick2
+	ldr	r1, [r0, #12]
+	cmp	r1, #1
+	beq	catch2
+	cmp	r1, #0
+	mov	r1, #1
+	str	r1, [r0, #12]
+catch2:
+	ldr	r0, =movingBrick2
+	ldr	r1, [r0, #12]
+	cmp	r1, #-1
+	beq	sactivate1
+	ldr	r1, [r0, #4]
+	ldr	r2, =#810
+	cmp	r1, r2
+	blt	sactivate1
+	ldr	r1, [r0]
+	ldr	r2, =paddle_location
+	ldr	r2, [r2]
+	add	r1, #60
+	cmp	r1, r2
+	blt	sactivate1
+	sub	r1, #60
+	add	r2, #120
+	cmp	r1, r2
+	bgt	sactivate1
+
+//	push	{r0, r1, r2, r3}
+//	ldr	r0, =print
+//	ldr	r1, =movingBrick2
+//	ldr	r1, [r1, #12]
+//	bl	printf
+//	pop	{r0, r1, r2, r3}
+
+	ldr	r0, =score
+	ldr	r1, [r0]
+	add	r1, #5
+	str	r1, [r0]
+
+	ldr	r0, =movingBrick2
+	bl	StopsBrick
+
+//next2: // sactivate1?
+//	pop	{r0, r1, r2, r3, r4, r5, r6, r7}
+	
+sactivate1:
+//	push	{r0, r1, r2, r3, r4, r5}
+	cmp	r4, #1
+	bne	catch1
+	cmp	r5, #8
+	bne	catch1
+	teq 	r7, r6				
+	bne	catch1
+	ldr	r0, =movingBrick1
+	ldr	r1, [r0, #12]
+	cmp	r1, #1
+	beq	catch1
+	cmp	r1, #0
+	mov	r1, #1
+	str	r1, [r0, #12]
+catch1:
+	ldr	r0, =movingBrick1
+	ldr	r1, [r0, #12]
+	cmp	r1, #-1
+	beq	next1
+	ldr	r1, [r0, #4]
+	ldr	r2, =#810
+	cmp	r1, r2
+	blt	next1
+	ldr	r1, [r0]
+	ldr	r2, =paddle_location
+	ldr	r2, [r2]
+	add	r1, #60
+	cmp	r1, r2
+	blt	next1
+	sub	r1, #60
+	add	r2, #120
+	cmp	r1, r2
+	bgt	next1
+
+//	push	{r0, r1, r2, r3}
+//	ldr	r0, =print
+//	ldr	r1, =movingBrick1
+//	ldr	r1, [r1, #12]
+//	bl	printf
+//	pop	{r0, r1, r2, r3}
+
+	ldr	r0, =score
+	ldr	r1, [r0]
+	add	r1, #5
+	str	r1, [r0]
+
+	ldr	r0, =movingBrick1
+	bl	StopsBrick
+
+next1: // sactivate1?
+	pop	{r0, r1, r2, r3, r4, r5, r6, r7}
 
 	and 	r3, row_s, r0
 	teq 	r3, r0			// if the tile's third bit was a 1
 	moveq	r0, #1
 	movne	r0, #0
-
 	pop	{r4, lr}		
-	bx	 lr			//returns
+	bx	 lr
+*/
 
 // SACTIVATE brick 2
 sactivate2:
 //	push	{r0, r1, r2, r3, r4, r5}
 	cmp	r4, #3
 	bne	catch2
-	cmp	r1, #3
+	cmp	r5, #3
 	bne	catch2
-	teq 	r3, r0				
+	teq 	r7, r6				
 	bne	catch2
 	ldr	r0, =movingBrick2
 	ldr	r1, [r0, #12]
@@ -922,7 +1050,14 @@ catch2:
 	sub	r1, #60
 	add	r2, #120
 	cmp	r1, r2
-	bgt	next3
+	bgt	next2
+
+	push	{r0, r1, r2, r3}
+	ldr	r0, =print
+	ldr	r1, =movingBrick2
+	ldr	r1, [r1, #12]
+	bl	printf
+	pop	{r0, r1, r2, r3}
 
 	ldr	r0, =score
 	ldr	r1, [r0]
@@ -932,7 +1067,7 @@ catch2:
 	ldr	r0, =movingBrick2
 	bl	StopsBrick
 
-next2:
+next2: // sactivate1?
 	pop	{r0, r1, r2, r3, r4, r5}
 
 	and 	r3, row_s, r0
@@ -1142,6 +1277,8 @@ halt:	b	halt
 .align 2
 .global frameBufferInfo
 
+print:
+	.string	"%d\n"
 printn:
 	.string	"%d	%d\n"
 printx:
