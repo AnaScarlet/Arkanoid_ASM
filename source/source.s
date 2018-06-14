@@ -519,6 +519,15 @@ hard_reset:
 	ldr	r0, =tile_row5
 	str	r1, [r0]
 
+/*	ldr	r0, =movingBrick1
+	ldr	r1, =#1092
+	str	r1, [r0]
+	ldr	r1, =#287
+	str	r1, [r0, #4]
+	mov	r1, #0
+	str	r1, [r0, #12]
+*/
+
 	ldr	r0, =movingBrick2
 	ldr	r1, =#792
 	str	r1, [r0]
@@ -891,6 +900,121 @@ catch3:
 	ldr	r0, =movingBrick3
 	bl	StopsBrick
 //next3:
+
+/*
+sactivate2:
+//	push	{r0, r1, r2, r3, r4, r5}
+	cmp	r4, #3
+	bne	catch2
+	cmp	r5, #3
+	bne	catch2
+	teq 	r7, r6				
+	bne	sactivate1
+	ldr	r0, =movingBrick2
+	ldr	r1, [r0, #12]
+	cmp	r1, #1
+	beq	catch2
+	cmp	r1, #0
+	mov	r1, #1
+	str	r1, [r0, #12]
+catch2:
+	ldr	r0, =movingBrick2
+	ldr	r1, [r0, #12]
+	cmp	r1, #-1
+	beq	sactivate1
+	ldr	r1, [r0, #4]
+	ldr	r2, =#810
+	cmp	r1, r2
+	blt	sactivate1
+	ldr	r1, [r0]
+	ldr	r2, =paddle_location
+	ldr	r2, [r2]
+	add	r1, #60
+	cmp	r1, r2
+	blt	sactivate1
+	sub	r1, #60
+	add	r2, #120
+	cmp	r1, r2
+	bgt	sactivate1
+
+//	push	{r0, r1, r2, r3}
+//	ldr	r0, =print
+//	ldr	r1, =movingBrick2
+//	ldr	r1, [r1, #12]
+//	bl	printf
+//	pop	{r0, r1, r2, r3}
+
+	ldr	r0, =score
+	ldr	r1, [r0]
+	add	r1, #5
+	str	r1, [r0]
+
+	ldr	r0, =movingBrick2
+	bl	StopsBrick
+
+//next2: // sactivate1?
+//	pop	{r0, r1, r2, r3, r4, r5, r6, r7}
+	
+sactivate1:
+//	push	{r0, r1, r2, r3, r4, r5}
+	cmp	r4, #1
+	bne	catch1
+	cmp	r5, #8
+	bne	catch1
+	teq 	r7, r6				
+	bne	catch1
+	ldr	r0, =movingBrick1
+	ldr	r1, [r0, #12]
+	cmp	r1, #1
+	beq	catch1
+	cmp	r1, #0
+	mov	r1, #1
+	str	r1, [r0, #12]
+catch1:
+	ldr	r0, =movingBrick1
+	ldr	r1, [r0, #12]
+	cmp	r1, #-1
+	beq	next1
+	ldr	r1, [r0, #4]
+	ldr	r2, =#810
+	cmp	r1, r2
+	blt	next1
+	ldr	r1, [r0]
+	ldr	r2, =paddle_location
+	ldr	r2, [r2]
+	add	r1, #60
+	cmp	r1, r2
+	blt	next1
+	sub	r1, #60
+	add	r2, #120
+	cmp	r1, r2
+	bgt	next1
+
+//	push	{r0, r1, r2, r3}
+//	ldr	r0, =print
+//	ldr	r1, =movingBrick1
+//	ldr	r1, [r1, #12]
+//	bl	printf
+//	pop	{r0, r1, r2, r3}
+
+	ldr	r0, =score
+	ldr	r1, [r0]
+	add	r1, #5
+	str	r1, [r0]
+
+	ldr	r0, =movingBrick1
+	bl	StopsBrick
+
+next1: // sactivate1?
+	pop	{r0, r1, r2, r3, r4, r5, r6, r7}
+
+	and 	r3, row_s, r0
+	teq 	r3, r0			// if the tile's third bit was a 1
+	moveq	r0, #1
+	movne	r0, #0
+	pop	{r4, lr}		
+	bx	 lr
+*/
 
 // SACTIVATE brick 2
 sactivate2:
