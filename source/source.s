@@ -93,7 +93,10 @@ next:				// otherwise, go here (exit)
 	add sp, #20
 	pop {fp, lr}
 	bx lr
-
+///////////////////////////////////////////////////////////////////////////////
+//	inputs: nil
+//	outputs: nil
+///////////////////////////////////////////////////////////////////////////////
 count .req r8
 row_state .req r7
 
@@ -232,7 +235,10 @@ o_end:	mov r6, r0
 	pop {r4, r5, r6, fp, lr}
 	bx lr
 
-
+///////////////////////////////////////////////////////////////////////
+//	inputs: nil
+//	outputs: nil
+//////////////////////////////////////////////////////////////////////
 delay .req r4
 released .req r5
 
@@ -240,7 +246,7 @@ controller:
 	push 	{r4, r5, lr}
 	mov fp, r0				// same fp as main
 
-	bl	init_snes
+	bl	init_snes			// initialize snes controller
 	
 	mov 	r0, #120
 	str 	r0, [fp, #12]
@@ -252,317 +258,323 @@ controller:
 	ldr 	r1, [r2]			// paddle location x
 	ldr 	r2, [r2, #4]			// paddle location y
 	mov 	r3, fp
-	bl 	draw_img
+	bl 	draw_img			// draw the paddle
 
 	mov	r0, fp
-	bl	draw_ball
-	b	draw
+	bl	draw_ball			// draw the ball
+	b	draw				// branch to draw
 	
-draw_loop:					// infinite loop
+draw_loop:					
 	mov	r0, #8000
-	bl	delayMicroseconds
+	bl	delayMicroseconds		// delay 8000 microseconds
 
-	bl	Read_SNES
+	bl	Read_SNES			// read user input from controller
 
-	ldr	r1, =Win_Flag
-	ldr	r2, [r1]
+	ldr	r1, =Win_Flag			// load win flag address
+	ldr	r2, [r1]			// load win flag value
 	cmp	r2, #1
-	beq	win_options
+	beq	win_options			// if win flag is #1 branch to win_options
 	
-	ldr	r1, =Lose_Flag
-	ldr	r2, [r1]
-	cmp	r2, #1
-	beq	lose_options
+	ldr	r1, =Lose_Flag			// load lose flag address
+	ldr	r2, [r1]			// load lose flag value
+	cmp	r2, #1	
+	beq	lose_options			// if lose flag is #1 branch to lose_options
 	
-	ldr	r1, =menu_flag
-	ldr	r1, [r1]
+	ldr	r1, =menu_flag			// load menu flag address
+	ldr	r1, [r1]			// load menu flag value
 
 	cmp	r1, #1
-	bne	menu_buttons
-	beq	game_buttons
+	bne	menu_buttons			// if flag set to 0 branch to menu_buttons
+	beq	game_buttons			// if flag set to 1 branch to game_buttons
 	
+//checks acceptable menu input from user
 menu_buttons:
-	cmp	r0, #2
-	beq	A_Move
+	cmp	r0, #2	
+	beq	A_Move				// branch to A_Move if input == 2
 
 	cmp	r0, #10
-	beq	Up_Move
+	beq	Up_Move				// branch to Up_Move if input == 10
 
 	cmp	r0, #11
-	beq	Down_Move
-	b	draw
+	beq	Down_Move			// branch to Down_Move if input == 11
+	b	draw				// branch to draw
 
 game_buttons:	
 	cmp	r0, #3
-	moveq	r2, #10
-	beq	Right_Move
+	moveq	r2, #10				// set move speed to 10 if input == 3
+	beq	Right_Move			// branch to Right_Move if input == 3
 
 	cmp	r0, #4
-	moveq	r2, #10
-	beq	Left_Move
-	
-	cmp	r1, #1
-	cmpeq	r0, #5
-	beq	Start_Move
+	moveq	r2, #10				// set move speed to 10 if input == 4
+	beq	Left_Move			// branch to Left_Move if input == 4
+					
+	cmp	r0, #5
+	beq	Start_Move			// branch to Start_Move if input == 5
 
 	cmp	r0, #6
-	beq	Select_Move
+	beq	Select_Move			// branch to Select_Move if input == 6
 
 	cmp	r0, #7
-	beq	B_Move
+	beq	B_Move				// branch to B_Move if input == 7
 	
 	cmp	r0, #8
-	moveq	r2, #20
-	beq	Left_Move
+	moveq	r2, #20				// set move speed to 20 if input == 8
+	beq	Left_Move			// branch to Left_Move if input == 8
 	
 	cmp	r0, #9
-	moveq	r2, #20
-	beq	Right_Move
-	b	draw_cont
+	moveq	r2, #20				// set move speed to 20 if input == 9
+	beq	Right_Move			// branch to Right_Move if input == 9
+	b	draw_cont			// branch to draw_cont
 	
 A_Move:
-	ldr	r0, =menu_option
-	ldr	r0, [r0]
+	ldr	r0, =menu_option		// load menu_option address
+	ldr	r0, [r0]			// load menu_option value
 	cmp	r0, #1
-	beq	end_loop
+	beq	end_loop			// branch to end_loop if menu_option == 1
 
-	ldr	r1, =menu_flag
+	ldr	r1, =menu_flag			// load menu_flag address
 	mov	r2, #1
-	str	r2, [r1]
-	b	draw
+	str	r2, [r1]			// change menu_flag to 1
+	b	draw				// branch to draw
 	
 Up_Move:
-	ldr	r0, =menu_option
-	ldr	r1, [r0]
+	ldr	r0, =menu_option		// load menu_option address
+	ldr	r1, [r0]			// load menu_option value
 	
 	cmp	r1, #0				// check menu_option
 	beq	draw				// draw
 
 	mov	r1, #0
-	str	r1, [r0]			// change menu_option up
-	b	draw
+	str	r1, [r0]			// change menu_option to 0
+	b	draw				// branch to draw
 	
 Down_Move:
-	ldr	r0, =menu_option
-	ldr	r1, [r0]
+	ldr	r0, =menu_option		// load menu_option address
+	ldr	r1, [r0]			// load menu_option value
 
 	cmp	r1, #0				// check menu_option
-	bne	draw				// draw
+	bne	draw				// branch to draw
 	
 	mov	r1, #1
-	str	r1, [r0]	
-	b	draw
+	str	r1, [r0]			// change menu_option to 1
+	b	draw				// branch to draw
 
 Right_Move:
-	ldr	r0, =paddle_location
-	ldr	r1, [r0]
-	add	r1, r2
+	ldr	r0, =paddle_location		// load paddle_location address
+	ldr	r1, [r0]			// load paddle_location value
+	add	r1, r2				// increment by speed
 	ldr	r3, =#1092
-	cmp	r1, r3
-	movgt	r1, #1092
+	cmp	r1, r3				// check right bound
+	movgt	r1, #1092			// store right bound if increments past
 	str	r1, [r0]			// change paddle location's x
 	b	draw
 Left_Move:
-	ldr	r0, =paddle_location
-	ldr	r1, [r0]
-	sub	r1, r2
+	ldr	r0, =paddle_location		// load paddle_location address
+	ldr	r1, [r0]			// load paddle_location value
+	sub	r1, r2				// decrement by speed
 	ldr 	r3, =#612
-	cmp	r1, r3
-	movlt	r1, r3
-	str	r1, [r0]
-	b	draw
+	cmp	r1, r3				// check left bound
+	movlt	r1, r3				// store left bound if decrements past
+	str	r1, [r0]			// change paddle location's x
+	b	draw				// branch to draw
 Start_Move:
-	bl	hard_reset
+	bl	hard_reset			// perform reset on all game values
 	mov 	released, #0			// reset b flag
 
-	b	draw
+	b	draw				// branch to draw
 	
 Select_Move:
 	mov	r1, #0
-	ldr	r0, =menu_flag
-	str	r1, [r0]
-	ldr	r0, =menu_option
-	str	r1, [r0]
+	ldr	r0, =menu_flag			// load menu_flag address
+	str	r1, [r0]			// change menu_flag to 0
+	ldr	r0, =menu_option		// load menu_option address
+	str	r1, [r0]			// change menu_flag to 0
 
-	bl	hard_reset
-	mov	released, #0
+	bl	hard_reset			// perform reset on all game values
+	mov	released, #0			// set released to 0
 	
-	b	draw
+	b	draw				// branch to draw
 	
 B_Move:	
-	mov released, #1
-	b draw
+	mov released, #1			// set released to 1
+	b draw					// branch to draw
 
 win_options:
-	push	{r0}
-	bl	win_screen
-	pop	{r0}
-	cmp	r0, #0
-	beq	draw_loop
+	push	{r0}				// push user input
+	bl	win_screen			// print win screen
+	pop	{r0}				// pop user input
+	cmp	r0, #0				
+	beq	draw_loop			// loop until ther is user input
 
 	mov	r0, #0
-	ldr	r1, =Win_Flag
-	str	r0, [r1]
-	b	end_options
+	ldr	r1, =Win_Flag			// load Win_Flag
+	str	r0, [r1]			// change Win_flag to 0
+	b	end_options			// branch to end_options
 
 lose_options:
-	push	{r0}
-	bl	gameOver_screen
-	pop	{r0}
+	push	{r0}				// push user input
+	bl	gameOver_screen			// print game over screen
+	pop	{r0}				// pop user input
 	cmp	r0, #0
-	beq	draw_loop
+	beq	draw_loop			// loop until there is user input
 
 	mov	r0, #0
-	ldr	r1, =Lose_Flag
-	str	r0, [r1]
+	ldr	r1, =Lose_Flag			// load Lose_Flag
+	str	r0, [r1]			// change Lose_Flag to 0
 	
 end_options:
 	mov	r0, #40000
-	bl	delayMicroseconds
+	bl	delayMicroseconds		// delay 40000 microseconds
 
 	mov	r0, #0
-	mov	released, r0
+	mov	released, r0			// set released to 0
 	ldr	r1, =menu_flag
-	str	r0, [r1]
+	str	r0, [r1]			// set menu_flag to 0
 	ldr	r1, =menu_option
-	str	r0, [r1]
-	bl	hard_reset
-	b	draw
+	str	r0, [r1]			// set menu_option to 0
+	bl	hard_reset			// reset all game values
+	b	draw				// branch to draw
 	
 draw:	
 	ldr	r0, =menu_flag
 	ldr	r0, [r0]
-	cmp	r0, #0
-	bne	draw_cont
+	cmp	r0, #0	
+	bne	draw_cont			// branch to draw_cont if menu_flag /= 0
 
 	ldr	r0, =menu_option
 	ldr	r0, [r0]
 	cmp	r0, #0
-	beq	print_play
-	bne	print_quit
+	beq	print_play			// branch to print_play if menu_option == 0
+	bne	print_quit			// branch to print_quit if menu_option /= 0
 
 print_play:
-	bl	main_menu_screen
-	b	draw_loop
+	bl	main_menu_screen		// print main menu (play)
+	b	draw_loop			// branch to draw_loop
 	
 print_quit:
-	bl	main_menu_quit
-	b	draw_loop	
+	bl	main_menu_quit			// print main menu (quit)
+	b	draw_loop			// branch to draw_loop
 	
 draw_cont:	
 	mov r0, fp
-	bl draw_grid
+	bl draw_grid				// draw_grif
 
 	mov 	r0, #120
 	str 	r0, [fp, #12]
 	mov 	r0, #img_hi
 	str 	r0, [fp, #16]
 
-	ldr 	r0, =paddle_location
-	ldr 	r1, [r0]		// get x
-	ldr 	r2, [r0, #4]		// get y
-	bl	get_paddle		// get image address
+	ldr 	r0, =paddle_location		// load paddle_location address
+	ldr 	r1, [r0]			// get paddle x
+	ldr 	r2, [r0, #4]			// get paddle y
+	bl	get_paddle			// get paddle image address
 	mov 	r3, fp
-	bl 	draw_img
+	bl 	draw_img			// print paddle
 
 
 // draw numbers
 	mov r0, fp
-	ldr r1, =score
-	ldr r1, [r1]
-	ldr r2, =#702
-	mov r3, #48
-	bl draw_number
+	ldr r1, =score				// load score address
+	ldr r1, [r1]				// get score
+	ldr r2, =#702				// load score x
+	mov r3, #48				// load score y
+	bl draw_number				// print score
 
 	mov r0, fp
-	ldr	r1, =lives
-	ldr	r1, [r1]
-	ldr r2, =#1172
-	mov r3, #48
-	bl draw_number
+	ldr	r1, =lives			// load lives address
+	ldr	r1, [r1]			// get lives
+	ldr r2, =#1172				// load lives x
+	mov r3, #48				// load lives y
+	bl draw_number				// print lives
 
 	mov	r0, fp
-	mov	r1, released
-	bl	move_ball
-	mov	released, r0
+	mov	r1, released			// send released
+	bl	move_ball			// move the ball
+	mov	released, r0			// return to released
 	
 	mov	r0, fp
-	mov	r1, released
-	bl	draw_ball
+	mov	r1, released			// send released
+	bl	draw_ball			// print ball
 	
-	b	draw_loop
+	b	draw_loop			// branch to draw_loop
 	
 end:	
 	pop 	{r4, r5, lr}
 	bx 	lr
 /////////////////////////////////////////////////////////////////////////
+//	inputs: nil
+//	outputs: nil
+/////////////////////////////////////////////////////////////////////////
 hard_reset:	
 	ldr	r0, =score
 	mov	r1, #0
-	str	r1, [r0]
+	str	r1, [r0]			// set score to 0
 	ldr	r0, =lives
 	mov	r1, #3
-	str	r1, [r0]
+	str	r1, [r0]			// set lives to 3
 
 	ldr	r0, =tile_row0
 	ldr	r1, =0x24924924
-	str	r1, [r0]
+	str	r1, [r0]			// reset bottom row bricks
 	ldr	r0, =tile_row1
-	str	r1, [r0]
+	str	r1, [r0]			// reset 2nd row bricks
 	ldr	r0, =tile_row2
-	str	r1, [r0]
+	str	r1, [r0]			// reset 3rd row bricks
 	ldr	r0, =tile_row3
-	str	r1, [r0]
+	str	r1, [r0]			// reset 4th row bricks
 	ldr	r0, =tile_row4
-	str	r1, [r0]
+	str	r1, [r0]			// reset 5th row bricks
 	ldr	r0, =tile_row5
-	str	r1, [r0]
+	str	r1, [r0]			// reset top row bricks
 
 /*	ldr	r0, =movingBrick1
 	ldr	r1, =#1092
-	str	r1, [r0]
+	str	r1, [r0]			// reset movingBrick1 x
 	ldr	r1, =#287
-	str	r1, [r0, #4]
+	str	r1, [r0, #4]			// reset movingBrick1 y
 	mov	r1, #0
-	str	r1, [r0, #12]
+	str	r1, [r0, #12]			// reset movingBrick1 activation bit
 */
 
 	ldr	r0, =movingBrick2
 	ldr	r1, =#792
-	str	r1, [r0]
+	str	r1, [r0]			// reset movingBrick2 x
 	ldr	r1, =#367
-	str	r1, [r0, #4]
+	str	r1, [r0, #4]			// reset movingBrick2 y
 	mov	r1, #0
-	str	r1, [r0, #12]
+	str	r1, [r0, #12]			// reset movingBrick2 activation bit
 	
 	ldr	r0, =movingBrick3
 	ldr	r1, =#1032
-	str	r1, [r0]
+	str	r1, [r0]			// reset movingBrick3 x
 	ldr	r1, =#447
-	str	r1, [r0, #4]
+	str	r1, [r0, #4]			// reset movingBrick3 y
 	mov	r1, #0
-	str	r1, [r0, #12]
+	str	r1, [r0, #12]			// reset movingBrick3 activation bit
 	
 
 soft_reset:
 	ldr	r0, =paddle_location		// reset paddle location
 	mov	r1, #850
-	str	r1, [r0]
-	str	r1, [r0, #4]
+	str	r1, [r0]			// reset paddle x
+	str	r1, [r0, #4]			// reset paddle y
 
 	ldr	r0, =ball_location		// reset ball location
 	mov	r1, #895
-	str	r1, [r0]
+	str	r1, [r0]			// reset ball x
 	mov	r1, #820
-	str	r1, [r0, #4]
+	str	r1, [r0, #4]			// reset ball y
 	mov	r1, #5
-	str	r1, [r0, #8]
+	str	r1, [r0, #8]			// reset ball x direction
 	mov	r1, #-5
-	str	r1, [r0, #12]
+	str	r1, [r0, #12]			// reset ball y direction
 	
-	bx	lr
+	bx	lr				// return
 	
-////////////////////////////////////////////////////////////////////////////	
+////////////////////////////////////////////////////////////////////////////
+//	inputs:	nil
+//	outputs: nil
+////////////////////////////////////////////////////////////////////////////
 move_ball:
 	push	{r6, r7, fp, lr}
 
@@ -571,236 +583,217 @@ move_ball:
 	
 	mov	fp, r0
 	
-	ldr	paddle, =paddle_location
-	ldr	ball, =ball_location
+	ldr	paddle, =paddle_location	// load paddle_location to paddle
+	ldr	ball, =ball_location		// load ball_location to ball
 
 	cmp	r1, #1
-	beq	x_motion
+	beq	x_motion			// branch to x_motion if b has been pressed
 
 
-	ldr	r0, [paddle]
-	add	r0, #45
-	str	r0, [ball]
-	b	move_ball_end
+	ldr	r0, [paddle]			// load paddle x
+	add	r0, #45				// add 45 to paddle x
+	str	r0, [ball]			// ball follows paddle
+	b	move_ball_end			// branch to move_ball_end
 
 x_motion:
-	ldr	r0, [ball]		// load ball x to r0
-	ldr	r1, [ball, #8]		// load ball x dir to r1
+	ldr	r0, [ball]			// load ball x
+	ldr	r1, [ball, #8]			// load ball x
 	add	r0, r1
-	str	r0, [ball]
+	str	r0, [ball]			// add ball speed to ball x
 
 	ldr 	r2, =#615
-	cmp	r0, r2		// check left bound
-	negle	r1, r1
-	strle	r1, [ball, #8]
+	cmp	r0, r2				// check left bound
+	negle	r1, r1				// negate ball x direction if past left bound
+	strle	r1, [ball, #8]			// store new direction
 	
 	ldr	r2, =#1178
-	cmp	r0, r2			// check right bound
-	negge	r1, r1
-	strge	r1, [ball, #8]
+	cmp	r0, r2				// check right bound
+	negge	r1, r1				// negate ball x direction if past right bound
+	strge	r1, [ball, #8]			// store new direction
 
 y_motion:	
-	ldr	r0, [ball, #4]		// load ball y to r0
-	ldr	r1, [ball, #12]		// load ball y dir to r1
+	ldr	r0, [ball, #4]			// load ball y to r0
+	ldr	r1, [ball, #12]			// load ball y dir to r1
 	add	r0, r1
-	str	r0, [ball, #4]
+	str	r0, [ball, #4]			// add ball speed to ball y
 
-	cmp	r0, #130
-	negle	r1, r1
-	strle	r1, [ball, #12]
+	cmp	r0, #130			// check upper bound
+	negle	r1, r1				// negate ball y direction if past upper bound
+	strle	r1, [ball, #12]			// store new direction
 
 	ldr	r2, =#835
-	cmp	r0, r2
-	bge	lose_life
+	cmp	r0, r2				// check if ball is below paddle
+	bge	lose_life			// lose life if ball is below paddle
 	ldr	r2, =#820
-	cmp	r0, r2
-	bge	check_paddle
+	cmp	r0, r2				// check if ball is at paddle
+	bge	check_paddle			// check if paddle intercepts ball
 	cmp	r0, #247
-	ble	y_next
+	ble	y_next				// branch to y_next if ball above bricks
 
 	ldr	r1, =#487
-	cmp	r0, r1
-	ble	check_brick
+	cmp	r0, r1				// check if ball is between top of bricks and paddle
+	ble	check_brick			// check if a brick has been hit
 y_next:	
-	mov	r0, #1
-	b	move_ball_end
+	mov	r0, #1				// return 1
+	b	move_ball_end			// branch to move_ball_end
 	
 check_paddle:
-	ldr	r0, [ball]		// r0 = ball x
-	ldr	r1, [paddle]		// r1 = paddle x
+	ldr	r0, [ball]			// load ball x
+	ldr	r1, [paddle]			// load paddle x
 	sub	r0, r1
 	cmp	r0, #-30
-	ble	lose_life
+	ble	lose_life			// if paddle missed ball branch to lose_life
 	cmp	r0, #-1
-	ble	left_side_hit
+	ble	left_side_hit			// branch if ball hit left side of paddle
 	cmp	r0, #120
-	bgt	lose_life
+	bgt	lose_life			// if paddle missed ball branch to lose_life
 	cmp	r0, #92
-	bgt	right_side_hit
+	bgt	right_side_hit			// branch if ball hit right side of paddle
 	
 // ball hit middle of paddle
 	ldr	r0, [ball, #12]
-	neg	r0, r0
-	str	r0, [ball, #12]
-	mov	r0, #1			// return #1
-	b	move_ball_end
+	neg	r0, r0		
+	str	r0, [ball, #12]			// change ball direction after hitting paddle
+	mov	r0, #1				// return 1
+	b	move_ball_end			// branch to move_ball_end
 
 left_side_hit:
 	mov	r1, #-5
-	str	r1, [ball, #8]
-	str	r1, [ball, #12]
-	mov	r0, #1			// return #1
-	b	move_ball_end
+	str	r1, [ball, #8]			// set ball x direction to -5
+	str	r1, [ball, #12]			// set ball y direction to -5
+	mov	r0, #1				// return 1
+	b	move_ball_end			// branch to move_ball_end
 
 right_side_hit:
 	mov	r1, #5
-	str	r1, [ball, #8]
+	str	r1, [ball, #8]			// set ball x direction to 5
 	mov	r1, #-5
-	str	r1, [ball, #12]
-	mov	r0, #1			// return #1
-	b	move_ball_end
+	str	r1, [ball, #12]			// set ball y direction to -5
+	mov	r0, #1				// return 1
+	b	move_ball_end			// branch to move_ball_end
 	
 check_brick:
 	ldr	r0, [ball]
-	bl	divFuncX
+	bl	divFuncX			// col = (ball x - 612) / 60
 	mov	r1, r0
 	ldr	r0, [ball, #4]
-	bl	divFuncY
-	push 	{r0, r1}
-	bl	check_brick_state
+	bl	divFuncY			// row = (ball y - 247) / 40
+	push 	{r0, r1}			// push row and col
+	bl	check_brick_state		// check if a brick was hit
 
 	cmp	r0, #1
-	beq	hit_brick
+	beq	hit_brick			// branch if a brick was hit
 
-	pop 	{r0, r1}
-	mov	r0, #1
-	b	move_ball_end
+	pop 	{r0, r1}			// pop row and col
+	mov	r0, #1				// return 1
+	b	move_ball_end			// branch to move_ball_end
 	
 hit_brick:
-	pop 	{r0, r1}
+	pop 	{r0, r1}			// pop row and col
 	ldr	r3, [ball]
 	ldr	r2, [ball, #4]
-	push	{r0, r1}
+	push	{r0, r1}			// push row and col
 
-	bl	update_tile_state
-
-	push	{r0, r1, r2, r3}
-	ldr	r0, =printx
-	ldr	r1, =tile_row1
-	ldr	r1, [r1]
-//	bl	printf
-	pop	{r0, r1, r2, r3}
+	bl	update_tile_state		// update hit bricks state
 
 //	ballx = r0, bally = r1, col = r2, row = r3
 check_x:
 	ldr	r0, [ball]
 	ldr	r1, [ball, #4]
-	pop	{r2, r3}
+	pop	{r2, r3}			// pop col and row
 	mov	r4, #60
-	mul	r4, r2, r4
-	add	r4, #612
-	sub	r4, r0, r4		// r4 = ballx - brick left edge
+	mul	r4, r2, r4			// col * 60
+	add	r4, #612			// brick left edge = (col * 60) + 612
+	sub	r4, r0, r4			// r4 = ballx - brick left edge
 	
-	cmp	r4, #-30
-	ble	neg_x
-	cmpgt	r4, #60
-	bgt	neg_x
+	cmp	r4, #-30			// determine if ball hit left edge of brick
+	ble	neg_x				// branch to neg_x if hit left edge
+	cmpgt	r4, #60				// determine if ball hit left edge of brick
+	bgt	neg_x				// branch to neg_x
 	
 neg_y:
 	ldr	r0, [ball, #8]
-	neg	r0, r0
-	str	r0, [ball, #8]
-	b	end_hit_brick
+	neg	r0, r0				// negate y direction
+	str	r0, [ball, #8]			// store new y direction
+	b	end_hit_brick			// branch to end_hit_brick
 	
 check_y:
 	mov	r4, #40
-	mul	r4, r3
-	add	r4, #247
-	sub	r4, r1, r4
+	mul	r4, r3				// row * 40
+	add	r4, #247			// brick right edge = (row * 40) + 247
+	sub	r4, r1, r4			// r4 = bally - brick right edge
 
-	cmp	r4, #-30
-	ble	neg_y
-	cmpgt	r4, #40
-	bgt	neg_y
+	cmp	r4, #-30			// determine if ball hit right edge of brick
+	ble	neg_y				// branch to neg_y if hit right edge
+	cmpgt	r4, #40				// determine if ball hit right edge of brick
+	bgt	neg_y				// branch to neg_y
 
 neg_x:
 	ldr	r0, [ball, #12]
-	neg	r0, r0
-	str	r0, [ball, #12]
+	neg	r0, r0				// negate x direction
+	str	r0, [ball, #12]			// store new x direction
 
 end_hit_brick:	
-//	ldr	r0, =score
-//	ldr	r1, [r0]
-//	add	r1, #1
-//	str	r1, [r0]
-
-	b	check_win
+	b	check_win			// check if all bricks are gone
 	
 lose_life:
 	ldr	r0, =lives
-	ldr	r1, [r0]
-	sub	r1, #1	
-	str	r1, [r0]
-	cmp	r1, #0
-	ble	game_over
+	ldr	r1, [r0]			// load number of lives
+	sub	r1, #1				// subtract one life
+	str	r1, [r0]			// store new lives
+	cmp	r1, #0				// check if all lives lost
+	ble	game_over			// branch to game_over if no lives left
 
 	str	r1, [r0]
-	bl	soft_reset
-	b	move_ball_end
+	bl	soft_reset			// reset paddle and ball
+	b	move_ball_end			// branch to move_ball_end
 
 check_win:
 	ldr	r0, =#460175067
 	ldr	r1, =tile_row0
 	ldr	r1, [r1]
-	cmp	r0, r1
-	bne	end_win
+	cmp	r0, r1				// check if bottom row of bricks are gone
+	bne	end_win				// branch to end_win if not all gone
 	ldr	r0, =#153391689
 	ldr	r1, =tile_row1
 	ldr	r1, [r1]
-	cmp	r0, r1
-	bne	end_win
+	cmp	r0, r1				// check if 2nd row of bricks are gone
+	bne	end_win				// branch to end_win if not all gone
 	ldr	r1, =tile_row2
 	ldr	r1, [r1]
-	cmp	r0, r1
-	bne	end_win
+	cmp	r0, r1				// check if 3rd row of bricks are gone
+	bne	end_win				// branch to end_win if not all gone
 	mov	r0, #0
 	ldr	r1, =tile_row3
 	ldr	r1, [r1]
-	cmp	r0, r1
-	bne	end_win
+	cmp	r0, r1				// check if 4th row of bricks are gone
+	bne	end_win				// branch to end_win if not all gone
 	ldr	r1, =tile_row4
 	ldr	r1, [r1]
-	cmp	r0, r1
-	bne	end_win
+	cmp	r0, r1				// check if 5th row of bricks are gone
+	bne	end_win				// branch to end_win if not all gone
 	ldr	r1, =tile_row5
 	ldr	r1, [r1]
-	cmp	r0, r1
-	bne	end_win
+	cmp	r0, r1				// check if top row of bricks are gone
+	bne	end_win				// branch to end_win if not all gone
 
 	ldr	r0, =Win_Flag
 	mov	r1, #1
-	str	r1, [r0]
+	str	r1, [r0]			// set win flag to 1
 end_win:
-	mov	r0, #1
-	b	move_ball_end
+	mov	r0, #1				// return 1
+	b	move_ball_end			// branch to move_ball_end
 	
 game_over:
-//	mov	r0, fp
-//	ldr r2, =#1172
-//	mov r3, #48
-//	bl draw_number	
-
 	ldr	r0, =Lose_Flag
 	ldr	r1, [r0]
 	mov	r1, #1
-	str	r1, [r0]
-
-//	bl	gameOver_screen
+	str	r1, [r0]			// set lose flag
 	
-	mov	r0, #0
+	mov	r0, #0				// return 0
 move_ball_end:	
 	pop	{r6, r7, fp, lr}
-	bx	lr
+	bx	lr				// return
 
 ////////////////////////////////////////////////////////////////////////////
 //	args:	r0 = row num
@@ -1078,6 +1071,9 @@ next2: // sactivate1?
 
 	
 /////////////////////////////////////////////////////////////////////////////
+//	inputs: nil
+//	outputs: nil
+/////////////////////////////////////////////////////////////////////////////
 draw_ball:
 	push	{fp, lr}
 
@@ -1085,15 +1081,15 @@ draw_ball:
 	mov	r0, #30
 	str	r0, [fp, #12]
 	str	r0, [fp, #16]
-	bl	get_soccer_ball
-	ldr	r3, =ball_location
-	ldr	r1, [r3]
-	ldr	r2, [r3, #4]
-	mov	r3, fp
-	bl	draw_img
+	bl	get_soccer_ball				// get soccer ball image
+	ldr	r3, =ball_location			// load ball_location address
+	ldr	r1, [r3]				// load ball x
+	ldr	r2, [r3, #4]				// load ball y
+	mov	r3, fp					// mov fp
+	bl	draw_img				// print soccer ball
 	
 	pop	{fp, lr}
-	bx	lr
+	bx	lr					// return
 
 
 width .req r4
