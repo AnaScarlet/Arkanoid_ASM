@@ -805,7 +805,7 @@ check_brick_state:
 	column	.req	r1
 	row_s	.req	r2
 	push	{r4, lr}	
-	mov	r4, r0			//ADDED
+	mov	r4, r0			//move r0 into r4 to avoid being overwitten
 
 	cmp 	row, #0			// tile row 0
 	ldreq	row_s, =tile_row0
@@ -839,94 +839,94 @@ check_brick_state:
 sactivate3:
 	push	{r0, r1, r2, r3, r4, r5, r6, r7}
 
-	mov 	r5, r1
-	mov	r6, r0
-	mov 	r7, r3
+	mov 	r5, r1			//move r1 into r5 to avoid being overwitten
+	mov	r6, r0			//move r0 into r6 to avoid being overwitten
+	mov 	r7, r3			//move r3 into r7 to avoid being overwitten
 
-	cmp	r4, #5
-	bne	catch3
-	cmp	r5, #7
-	bne	catch3
-	teq 	r7, r6				
-	bne	sactivate2
-	ldr	r0, =movingBrick3
-	ldr	r1, [r0, #8]
-	cmp	r1, #1
-	beq	catch3
-	cmp	r1, #0
-	mov	r1, #1
-	str	r1, [r0, #8]
+	cmp	r4, #5			//compare row # to 5
+	bne	catch3			//if row # is not equal to 5, branch to catch3
+	cmp	r5, #7			//compare colume # to 7
+	bne	catch3			//if colume # is not equal to 7, branch to catch3
+	teq 	r7, r6			//check if brick has been hit	
+	bne	sactivate2		//if it hasn't, then branch to see if the next bonus brick has been hit
+	ldr	r0, =movingBrick3	//load x, y and activation of 3rd bonus brick
+	ldr	r1, [r0, #8]		//load activation
+	cmp	r1, #1			//compare activation to 1
+	beq	catch3			//if equal, branch to catching it
+	cmp	r1, #0			//compare activation to 0
+	mov	r1, #1			//move 1 into r1
+	str	r1, [r0, #8]		//store activation
 
 catch3:
-	ldr	r0, =movingBrick3
-	ldr	r1, [r0, #8]
-	cmp	r1, #-1
-	beq	sactivate2
-	ldr	r1, [r0, #4]
-	ldr	r2, =#810
-	cmp	r1, r2
-	blt	sactivate2
-	ldr	r1, [r0]
-	ldr	r2, =paddle_location
-	ldr	r2, [r2]
-	add	r1, #60
-	cmp	r1, r2
-	blt	sactivate2
-	sub	r1, #60
-	add	r2, #120
-	cmp	r1, r2
-	bgt	sactivate2
+	ldr	r0, =movingBrick3	//load x, y and activation of 3rd bonus brick
+	ldr	r1, [r0, #8]		//load activation
+	cmp	r1, #-1			//compare activation to -1
+	beq	sactivate2		//if they equal, branch to dealing with the next boonus brick
+	ldr	r1, [r0, #4]		//load y into r1
+	ldr	r2, =#810		//load 810 into r2
+	cmp	r1, r2			//compare y and 810
+	blt	sactivate2		//if y < 810, branch to dealing with the next boonus brick
+	ldr	r1, [r0]		//load r0 into y
+	ldr	r2, =paddle_location	//load paddle's location
+	ldr	r2, [r2]			
+	add	r1, #60			//add 60 to y
+	cmp	r1, r2			//compare paddle's location to y
+	blt	sactivate2		//if paddle's location < y, branch to dealing with the next boonus brick
+	sub	r1, #60			//subtract 60 from y
+	add	r2, #120		//add 120 to the paddle's location
+	cmp	r1, r2			//compare paddle's location to y
+	bgt	sactivate2		//if paddle's location > y, branch to next3
 
-	ldr	r0, =score
-	ldr	r1, [r0]
-	add	r1, #5
-	str	r1, [r0]
+	ldr	r0, =score		//load score
+	ldr	r1, [r0]		//load it into r1
+	add	r1, #5			//add 5 to it if paddle catches bonus brick
+	str	r1, [r0]		//store it into r1
 
-	ldr	r0, =movingBrick3
-	bl	StopsBrick
+	ldr	r0, =movingBrick3	//load x, y and activation of 3rd bonus brick
+	bl	StopsBrick		//branch and link to stopping brick3
 
 // SACTIVATE brick 2
 sactivate2:
-	cmp	r4, #3
-	bne	catch2
-	cmp	r5, #3
-	bne	catch2
-	teq 	r7, r6				
-	bne	catch2
-	ldr	r0, =movingBrick2
-	ldr	r1, [r0, #8]
-	cmp	r1, #1
-	beq	catch2
-	cmp	r1, #0
-	mov	r1, #1
-	str	r1, [r0, #8]
+	cmp	r4, #3			//compare row # to 3
+	bne	catch2			//if row # is not equal to 3, branch to catching brick3
+	cmp	r5, #3			//compare colume # to 3
+	bne	catch2			//if colume # is not equal to 3, branch to catching brick3
+	teq 	r7, r6			//check if brick has been hit	
+	bne	catch2			//if it hasn't, go to catch2
+	ldr	r0, =movingBrick2	//load x, y and activation of 2nd bonus brick
+	ldr	r1, [r0, #8]		//load activation
+	cmp	r1, #1			//compare activation to 1
+	beq	catch2			//if they equal, branch to catch2
+	cmp	r1, #0			//compare activation to 0
+	mov	r1, #1			//move 1 into activation
+	str	r1, [r0, #8]		//store activation
 catch2:
-	ldr	r0, =movingBrick2
-	ldr	r1, [r0, #8]
-	cmp	r1, #-1
-	beq	sactivate1
-	ldr	r1, [r0, #4]
-	ldr	r2, =#810
-	cmp	r1, r2
-	blt	sactivate1
-	ldr	r1, [r0]
-	ldr	r2, =paddle_location
+	ldr	r0, =movingBrick2	//load x, y and activation of 2nd bonus brick
+	ldr	r1, [r0, #8]		//load activation
+	cmp	r1, #-1			//compare activation to -1
+	beq	sactivate1		//if they equal, branch to dealing with the next boonus brick
+	ldr	r1, [r0, #4]		//load y into r1
+	ldr	r2, =#810		//load 810 into r2
+	cmp	r1, r2			//compare y and 810
+	blt	sactivate1		//if y < 810, branch to dealing with the next boonus brick
+	ldr	r1, [r0]		//load r0 into y
+	ldr	r2, =paddle_location	//load paddle's location
 	ldr	r2, [r2]
-	add	r1, #60
-	cmp	r1, r2
-	blt	sactivate1
-	sub	r1, #60
-	add	r2, #120
-	cmp	r1, r2
-	bgt	sactivate1
+	add	r1, #60			//add 60 to y
+	cmp	r1, r2			//compare paddle's location to y
+	blt	sactivate1		//if paddle's location < y, branch to dealing with the next boonus brick
+	sub	r1, #60			//subtract 60 from y
+	add	r2, #120		//add 120 to the paddle's location
+	cmp	r1, r2			//compare paddle's location to y
+	bgt	sactivate1		//if paddle's location > y, branch to dealing with the next boonus brick
 
-	ldr	r0, =score
-	ldr	r1, [r0]
-	add	r1, #5
-	str	r1, [r0]
+	ldr	r0, =score		//load score
+	ldr	r1, [r0]		//load it into r1
+	add	r1, #5			//add 5 to it if paddle catches bonus brick
+	str	r1, [r0]		//store into r1
 
-	ldr	r0, =movingBrick2
-	bl	StopsBrick
+	ldr	r0, =movingBrick2	//load x, y and activation of 2nd bonus brick
+	bl	StopsBrick		//branch to stopping the bonus brick
 
 sactivate1:
 /*	cmp	r4, #1
